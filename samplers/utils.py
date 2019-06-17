@@ -1,4 +1,5 @@
 import torch
+from torch import autograd
 import numpy as np
 
 def eval_hessian(loss_grad, model):
@@ -19,3 +20,4 @@ def eval_hessian(loss_grad, model):
             cnt = 1
         hessian[idx] = g2
     return hessian.cpu().data.numpy()
+

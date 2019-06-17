@@ -98,6 +98,7 @@ class MALA(Sampler):
 
         print("Burn-in phase started")
         for i in range(burn_in):
+            self.zero_grad()
             print('Burn-in iter {}'.format(i+1))
             self.loss = closure()
             # print(self.loss)
@@ -195,6 +196,7 @@ class SGLD(Sampler):
 
         print("Burn-in phase started")
         for i in range(burn_in):
+            self.zero_grad()
             print('Burn-in iter {}'.format(i+1))
             self.loss = closure()
             # print(self.loss)
