@@ -2,9 +2,22 @@
 
 Bayesian inference in nonparametric ODE models
 
-### TODO's
+### TODO's for Jai
 
-1. Add pipeline for mMALA/SGLD sampling and inference for Kernel regression
-2. Use FIM formula in Stapor et. al. for Riemannian Metric
-3. Calculate Hessian vector product using this rick: https://discuss.pytorch.org/t/calculating-hessian-vector-product/11240/4
-4. In case of non-identity metrics in samplers, concatenate all the gradients into a single vector and then do the preconditioning etc. this is so that the matrix can contain some kind of correlations between different parameters and not just inside the individual tensors themselves. See https://github.com/pytorch/pytorch/blob/master/torch/optim/lbfgs.py#L57-L76
+1. Add baselines for Van der Pol with:
+
+    1.1. Neural Network
+  
+    1.2. Gaussian Process Mean Function
+
+    with the following changes:
+
+2. Implement L-BFGS type sampler (Langevin, no correction term):
+    
+    2.1. [HAMCMC](https://arxiv.org/pdf/1602.03442.pdf)
+    
+    2.2. [SANTA](https://arxiv.org/pdf/1512.07962.pdf) or [P-SGLD](https://arxiv.org/pdf/1512.07666.pdf)
+
+3. Implement [Stochastic Gradient HMC](https://arxiv.org/pdf/1402.4102.pdf)
+
+4. (*Optional*) Implement correction term in L-BFGS samplers using 2nd order gradients

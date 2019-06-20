@@ -94,6 +94,8 @@ class MMALA(Sampler):
         
         grad_vector_prev = self.grad_vector.clone().detach()
         self.grad_vector = self._get_flattened_grad()
+
+        print("Gradient Vector:", self.grad_vector)
         
         lr = self.param_groups[0]['lr']
 
@@ -138,6 +140,8 @@ class MMALA(Sampler):
             params, is_accepted = self.accept_or_reject(closure)
             if not is_accepted:
                 if not torch.eq(self.params[0].data, param_prev.data).all():
+                    print("current param:", self.params[0])
+                    print("previous param:", param_prev)
                     raise RuntimeError("Rejection step copying does not work")
             #####
             
@@ -167,3 +171,78 @@ class HAMCMC(Sampler):
     def __init__():
         pass
 
+
+
+class pSGLD(Trainer):
+    '''Preconditioned Stochastic Gradient Langevin Dynamics
+    Implemented according to the paper:
+    Li, Chunyuan, et al., 2015
+    "Preconditioned stochastic gradient Langevin dynamics
+    for deep neural networks."
+    Arguments:
+        initial_lr: float.
+                    The initial learning rate
+        alpha: float.
+               Balances current vs. historic gradient
+        mu: float.
+            Controls curvature of preconditioning matrix
+            (Corresponds to lambda in the paper)
+        use_gamma: boolean.
+                   Whether to use the Gamma term which is expensive to compute
+    '''
+
+    def __init__(self, initial_lr=1.0e-5, alpha=0.99, mu=1.0e-5, use_gamma = False, **kwargs):
+        super(pSGLD, self).__init__(**kwargs)
+        self.params['lr'] = initial_lr
+        self.params['mu'] = mu
+        self.params['alpha'] = alpha
+        self.params['use_gamma'] = use_gamma
+
+    def _create_auxiliary_variables(self):
+        self.lr = tensor.scalar('lr')
+        self.V_t = [theano.shared(np.asarray(np.zeros(p.get_value().shape),
+                                             dtype = theano.config.floatX))
+                    for p in self.weights]
+
+
+    def _get_updates(self):
+        n = self.params['batch_size']
+        N = self.params['train_size']
+        prec_lik = self.params['prec_lik']
+        prec_prior = self.params['prec_prior']
+        gc_norm = self.params['gc_norm']
+        alpha = self.params['alpha']
+        mu = self.params['mu']
+        use_gamma = self.params['use_gamma']
+
+        # compute log-likelihood
+        error = self.model_outputs - self.true_outputs
+        logliks = log_normal(error, prec_lik)
+        sumloglik = logliks.sum()
+        meanloglik = sumloglik / n
+
+        # compute gradients
+        grads = tensor.grad(cost = meanloglik, wrt = self.weights)
+
+        # update preconditioning matrix
+        V_t_next = [alpha * v + (1 - alpha) * g * g for g, v in zip(grads, self.V_t)]
+        G_t = [1. / (mu + tensor.sqrt(v)) for v in V_t_next]
+
+        logprior = log_prior_normal(self.weights, prec_prior)
+        grads_prior = tensor.grad(cost = logprior, wrt = self.weights)
+
+        updates = []
+        [updates.append((v, v_n)) for v, v_n in zip(self.V_t, V_t_next)]
+
+        for p, g, gp, gt in zip(self.weights, grads, grads_prior, G_t):
+            # inject noise
+            noise = tensor.sqrt(self.lr * gt) * trng.normal(p.shape)
+            if use_gamma:
+                # compute gamma
+                gamma = nlinalg.extract_diag(tensor.jacobian(gt.flatten(), p).flatten(ndim=2))
+                gamma = gamma.reshape(p.shape)
+                updates.append((p, p + 0.5 * self.lr * ((gt * (gp + N * g)) + gamma) + noise))
+            else:
+                updates.append((p, p + 0.5 * self.lr * (gt * (gp + N * g)) + noise))
+
+return updates, sumloglik

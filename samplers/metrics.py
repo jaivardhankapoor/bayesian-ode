@@ -47,7 +47,7 @@ class SoftAbsMetric:
         self.sqrtinvMetric = None
         self.metric_eigval, self.hess_eigval, self.eigvec = None, None, None
 
-    def __call__(self, plot_invMetric=True, plot_Metric=True):
+    def __call__(self, plot_invMetric=False, plot_Metric=False):
         sqrtMetric, sqrtinvMetric = self.sqrt()
         self.Metric = self.eigvec * torch.mm(torch.diag(self.metric_eigval), self.eigvec.t())
         self.invMetric = self.eigvec * torch.mm(torch.diag(1./self.metric_eigval), self.eigvec.t())
@@ -71,11 +71,11 @@ class SoftAbsMetric:
 
     def eig(self):
         self.hess = self.closure()
-        # print(self.hess)
         self.hess_eigval, self.eigvec = torch.symeig(self.hess, eigenvectors=True)
-        print('Minimum eigenvalue of Hessian:', torch.min(self.hess_eigval).data.item())
+        # print("Hessian:", self.hess)
+        # print('Minimum eigenvalue of Hessian:', torch.min(self.hess_eigval).data.item())
         self.metric_eigval = self.softabs(self.hess_eigval)
-        print('Maximum eigenvalue of softabs metric:', torch.max(self.metric_eigval).data.item())
+        # print('Maximum eigenvalue of softabs metric:', torch.max(self.metric_eigval).data.item())
         return self.metric_eigval, self.hess_eigval, self.eigvec
 
     def sqrt(self):
@@ -114,12 +114,12 @@ class HessianMetric:
         self.identity_factor = identity_factor
         self.Metric, self.invMetric, self.sqrtinvMetric = None, None, None
     
-    def __call__(self, plot_invMetric=True):
+    def __call__(self, plot_invMetric=False):
         self.Metric = self.closure()
         self.invMetric = torch.pinverse(self.Metric, rcond=self.rcond)
-        self.sqrtinvMetric = torch.eye(self.invMetric.size()[0])
-        # self.sqrtinvMetric = torch.cholesky(self.invMetric + \
-        #     self.identity_factor*torch.eye(self.invMetric.size()[0]))
+        # self.sqrtinvMetric = torch.eye(self.invMetric.size()[0])
+        self.sqrtinvMetric = torch.cholesky(self.invMetric + \
+            self.identity_factor*torch.eye(self.invMetric.size()[0]))
         if plot_invMetric:
             # print('Eigenvalues of cholesky of inverse hessian(corrected):\n',
             # torch.symeig(self.sqrtinvMetric)[0])
