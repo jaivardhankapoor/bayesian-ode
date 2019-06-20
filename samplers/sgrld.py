@@ -78,6 +78,7 @@ class MMALA(Sampler):
         '''
         Accept/Reject Step for MMALA. Required due to asymmetrical proposal
         '''
+        print('Accept reject step:', end=' ')
         is_accepted = True
         self.zero_grad()
         new_loss = closure()
@@ -113,6 +114,7 @@ class MMALA(Sampler):
             vector_to_parameters(param_vector_prev, self.params)
 
         params = [p.clone().detach().data.numpy() for p in self.params]
+        print(is_accepted)
         return params, is_accepted
 
 
@@ -131,7 +133,7 @@ class MMALA(Sampler):
             self.loss.backward()
             self.step()
             #### Checking if rejection works
-            param_prev = self.params[0]
+            param_prev = self.params[0].clone().detach()
             self.zero_grad()
             params, is_accepted = self.accept_or_reject(closure)
             if not is_accepted:
