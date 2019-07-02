@@ -629,14 +629,10 @@ class HAMCMC(Sampler):
         for i in range(t-1, t-M+1, step=-1):
             rho
 
-    def step(self):        
+    def _step(self, metric):        
         
-        # if len(self.samples) and not self.samples[-1][1]: # reuse metric from acc/rej if previous sample is accepted
-
-        self.metric = self.metric_obj()
-        self.state['metric'] = {k: v.clone().detach() for k,v in self.metric.items()}
-
         self.param_vector = parameters_to_vector(self.params)
+
         if torch.isnan(self.param_vector).sum() or torch.isnan(self.param_vector).sum():
             raise ValueError("Encountered NaN/Inf in parameter")
         
@@ -654,6 +650,8 @@ class HAMCMC(Sampler):
         
         vector_to_parameters(self.param_vector, self.params)
     
+
+    def step(self):
 
     def sample(self, closure, num_samples=1000, burn_in=100, print_loss=False):
         chain = self.samples
