@@ -13,6 +13,7 @@ def eval_full_hessian(loss_grad, params):
     https://discuss.pytorch.org/t/compute-the-hessian-matrix-of-a-network/15270/3
     '''
     cnt = 0
+    g_vector = None
     for g in loss_grad:
         g_vector = g.contiguous().view(-1) if cnt == 0\
                    else torch.cat([g_vector, g.contiguous().view(-1)])
