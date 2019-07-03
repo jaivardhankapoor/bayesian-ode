@@ -588,7 +588,7 @@ class HAMCMC(Sampler):
     
     '''
     
-    def __init__(self, params, **kwargs):
+    def __init__(self, params, memory=5, **kwargs):
         if 'add_noise' not in defaults:
             defaults['add_noise'] = True
         super().__init__(params, defaults)
@@ -598,6 +598,8 @@ class HAMCMC(Sampler):
 
         self.params = self.param_groups[0]['params']
         self.param_vector =  None
+
+        self.memory = memory
 
     def _numel(self):
         if self._numel_cache is None:
@@ -616,53 +618,92 @@ class HAMCMC(Sampler):
             views.append(view)
         return torch.cat(views, 0)
 
-    def _add_grad(self, step_size, update):
-        offset = 0
-        for p in self._params:
-            numel = p.numel()
-            # view as to avoid deprecated pointwise semantics
-            p.data.add_(step_size, update[offset:offset + numel].view_as(p.data))
-            offset += numel
-        assert offset == self._numel()
+    def _compute_vector_prod(self, grad, M, t):
+        pass
 
-    def _compute_hessian_vector_prod(grad, M, t):
-        for i in range(t-1, t-M+1, step=-1):
-            rho
+    def _update_metric_vars(self):
+        pass
 
-    def _step(self, metric):        
-        
+    def _add_to_memory(self):
+        pass
+    
+    def step_without_metric(self):
+
+        # Vectorize parameters
         self.param_vector = parameters_to_vector(self.params)
 
+        # Check if encontered NaN values
         if torch.isnan(self.param_vector).sum() or torch.isnan(self.param_vector).sum():
             raise ValueError("Encountered NaN/Inf in parameter")
         
-        lr = self.param_groups[0]['lr']
+        size = self.param_vector.size()
+        langevin_noise = Normal(torch.zeros(size),
+                        torch.ones(size) / np.sqrt(0.5*lr)).sample()
+        self.grad_vector = self._get_flattened_grad()
+        
+        self.param_vector.add_(-lr*self.grad_vector)
+        self.param_vector.add_(-lr*langevin_noise)
+                
+        # Add to memory
+        self._add_to_memory()
+
+        # Reshape params from vector
+        vector_to_parameters(self.param_vector, self.params)
+
+    def get_lr(self, t):
+        lr0 = self.param_groups[0]['lr0']
+        gamma = self.param_groups[0]['lr_gamma']
+        t0 = self.param_groups[0]['lr_t0']
+        alpha = self.param_groups[0]['lr_alpha']
+        return lr0/np.power(t0+alpha*t, gamma)
+            
+
+    def step(self, lr):        
+        
+        # Vectorize parameters
+        self.param_vector = parameters_to_vector(self.params)
+
+
+        # Check if encontered NaN values
+        if torch.isnan(self.param_vector).sum() or torch.isnan(self.param_vector).sum():
+            raise ValueError("Encountered NaN/Inf in parameter")
+        
 
         size = self.param_vector.size()
         langevin_noise = Normal(torch.zeros(size),
-                        torch.ones(size) / np.sqrt(0.5*lr))
+                        torch.ones(size) / np.sqrt(0.5*lr)).sample()
         self.grad_vector = self._get_flattened_grad()
-        
-        temp = -lr*self.metric['invMetric']@self.grad_vector
 
-        self.param_vector.add_(-lr*self.metric['invMetric']@self.grad_vector)
-        self.param_vector.add_(-lr*self.metric['sqrtinvMetric']@(langevin_noise.sample()))
+        # Compute vector products with metric using recursion algo
+        grad_vec, noise_vec = self._compute_vector_prod(self.grad_vector, langevin_noise)
         
+        # Update parameters
+        # lr = self.param_groups[0]['lr']
+        self.param_vector.add_(-lr*grad_vec)
+        self.param_vector.add_(-lr*noise_vec)
+        
+        # Update metric variables
+        self._update_metric_vars()
+        
+        # Reshape params from vector
         vector_to_parameters(self.param_vector, self.params)
     
-
-    def step(self):
 
     def sample(self, closure, num_samples=1000, burn_in=100, print_loss=False):
         chain = self.samples
         logp_array = []
+
+        self.init_memory()
 
         print("Burn-in phase started")
         for i in range(burn_in):
             self.zero_grad()
             self.loss = closure()
             self.loss.backward()
-            self.step()
+            if i < self.memory*2 - 1:
+                self.step_without_metric(lr=self.get_lr(i))
+            else:
+                self.step(lr=self.get_lr(i))
             logp_array.append(-(self.loss.item()))
             
             if print_loss:
@@ -677,7 +718,7 @@ class HAMCMC(Sampler):
             self.zero_grad()
             self.loss = closure()
             self.loss.backward()
-            self.step()
+            self.step(lr=self.get_lr(burn_in+i))
             params = [[p.clone().detach().data.numpy() for p in group['params']]
                   for group in self.param_groups]
             chain.append((params, True))
