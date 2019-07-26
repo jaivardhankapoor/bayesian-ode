@@ -24,7 +24,7 @@ Bayesian inference in nonparametric ODE models
 
     ....3.1.1 Implement non-contiguous difference L-BFGS with new as well as old recursion :heavy_check_mark:
 
-    ....3.1.2 Implement contiguous difference L-BFGS with new as well as old recursion
+    ....3.1.2 Implement contiguous difference L-BFGS with new as well as old recursion :heavy_check_mark:
 
     ....3.1.3 Ensure positive definiteness by removing pairs for which siyi<0
 
