@@ -180,7 +180,6 @@ def run_SGLD(config, dists, output):
         wt = [sampler.get_lr(i*config['thinning']+config['burn_in'])\
                 for i in range(len(chain[::config['thinning']]))]
         wt = np.array(wt)/np.sum(wt)
-        print(wt)
         x_mean = np.sum([wt[i]*sample[0][0][0] for i, (sample, acc) in enumerate(chain[::config['thinning']]) if acc])
         y_mean = np.sum([wt[i]*sample[0][1][0] for i, (sample, acc) in enumerate(chain[::config['thinning']]) if acc]) 
         ax[distnum].annotate('x_mean={:.02f}\ny_mean={:.02f}'.format(x_mean, y_mean),
