@@ -115,7 +115,7 @@ def run_optim(config, data, output):
     if 'SGD' in config['method']:
         optim = torch.optim.SGD(params, lr=config['lr'])
     if 'nag' in config['method']:
-        optim = torch.optim.SGD(params, lr=config['lr'], nesterov=True)
+        optim = torch.optim.SGD(params, lr=config['lr'], momentum=0.5, nesterov=True)
     if 'RMSprop' in config['method']:
         if 'rmsprop_alpha' not in config:
             config['rmsprop_alpha'] = 0.99
@@ -262,7 +262,7 @@ def run_sampler(config, data, output):
         out_dir = os.path.join(out_dir, str(config['id'])+config['dir_name'])
     else:
         out_dir = os.path.join(out_dir, str(config['id']))
-        
+
     os.makedirs(out_dir, exist_ok=True)
 
     with open(os.path.join(out_dir, str(args.id)+".json"), 'w') as f:
