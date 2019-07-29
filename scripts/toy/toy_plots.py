@@ -6,9 +6,9 @@ from matplotlib import cm
 import matplotlib.ticker as ticker
 import seaborn as sns
     
+import os
 import json
 import argparse
-import os
 import torch.multiprocessing as multiprocessing
 
 def get_banana_fns(x,y, a=0.2, b=2.0, c=1.0):
@@ -338,12 +338,14 @@ if __name__=='__main__':
     y_init = 3*torch.randn([1]).clone().detach()
     
     dists = {
-        # 'gaussian1': [1,1,0],
-        # 'gaussian2': [3.0,0.1,0],
         'gaussian': [3,0.3,0.7],
-        'bimodal': [],
-        'multimodal': [(0.3,0.3,0.2, 0.2), ([-1,-0.5], [-1,1.5], [1,-1.5], [2,1]),
+        # 'bimodal': [],
+        'multimodal1': [(0.3,0.3,0.2, 0.2), ([-1,-0.5], [-1,1.5], [1,-1.5], [2,1]),
                        ([1,0.5],[1.5,0.3],[0.8,0.5],[1.0,0.2]), (0.5,-0.5, -0.7, 0.2)],
+        'multimodal2':[[1./36.]*25.,
+                       [[2.*(i+1)-5., 2.*(j+1)-5.] for i in range(5) for j in range(5)],
+                       [[0.4,0.4] for i in range(25)],
+                       [0.]*25],
         'banana': [],
     }
 

@@ -95,9 +95,9 @@ class MALA(Sampler):
         return params, is_accepted
 
 
-    def sample(self, closure, num_samples=1000, burn_in=100, print_loss=False):
+    def sample(self, closure, num_samples=1000, burn_in=100, print_loss=False, print_iters=False, arr_closure=None):
         chain = self.samples
-        logp_array = []
+        # logp_array = []
 
         print("Burn-in phase started")
         for i in range(burn_in):
@@ -116,10 +116,13 @@ class MALA(Sampler):
                 if not torch.eq(self.param_groups[0]['params'][0].data, param_prev.data).all():
                     raise RuntimeError("Rejection step copying does not work")
             #####
-            logp_array.append(-(self.loss.item()))
+            # logp_array.append(-(self.loss.item()))
+            sq_err_loss = closure(add_prior=False)
+            if arr_closure is not None:
+                arr_closure(self.loss, sq_err_loss)
             if print_loss:
                 with torch.no_grad():
-                    print('Burn-in iter {:04d} | loss {:.06f} | accepted={}'.format(i+1, closure(add_prior=False).item(), is_accepted))
+                    print('Burn-in iter {:04d} | loss {:.06f} | accepted={}'.format(i+1, sq_err_loss.item(), is_accepted))
             else:
                 print('Burn-in iter {:04d} | accepted={}'.format(i+1, is_accepted))
 
@@ -132,14 +135,18 @@ class MALA(Sampler):
             self.step()
             params, is_accepted = self.accept_or_reject(closure)
             chain.append([params, is_accepted])
-            logp_array.append(-(self.loss.item()))
-            if print_loss:
-                with torch.no_grad():
-                    print('Sample iter {:04d} | loss {:.06f} | accepted={}'.format(i+1, closure(add_prior=False).item(), is_accepted))
-            else:
-                print('Sample iter {:04d} | accepted={}'.format(i+1, is_accepted))
+            # logp_array.append(-(self.loss.item()))
+            sq_err_loss = closure(add_prior=False)
+            if arr_closure is not None:
+                arr_closure(self.loss, sq_err_loss)
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Sample iter {:04d} | loss {:.06f} | accepted={}'.format(i+1, sq_err_loss.item(), is_accepted))
+                else:
+                    print('Sample iter {:04d} | accepted={}'.format(i+1, is_accepted))
         
-        return chain, logp_array
+        return chain #, logp_array
 
 class SGLD(Sampler):
 
@@ -203,9 +210,9 @@ class SGLD(Sampler):
         return lr0/np.power(t0+alpha*t, gamma)
             
 
-    def sample(self, closure, num_samples=1000, burn_in=100, print_loss=False):
+    def sample(self, closure, num_samples=1000, burn_in=100, print_iters=False, print_loss=False, arr_closure=None):
         chain = self.samples
-        logp_array = []
+        # logp_array = []
 
         print("Burn-in phase started")
         for i in range(burn_in):
@@ -215,12 +222,16 @@ class SGLD(Sampler):
             # print('Loss: {}'.format(self.loss))
             self.loss.backward()
             self.step(lr=self.get_lr(i))
-            logp_array.append(-self.loss.item())
-            if print_loss:
-                with torch.no_grad():
-                    print('Burn-in iter {:04d} | loss {:.06f}'.format(i+1, closure(add_prior=False).item()))
-            else:
-                print('Burn-in iter {:04d}'.format(i+1))
+            # logp_array.append(-self.loss.item())
+            sq_err_loss = closure(add_prior=False)
+            if arr_closure is not None:
+                arr_closure(self.loss, sq_err_loss)
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Burn-in iter {:04d} | loss {:.06f}'.format(i+1, sq_err_loss.item()))
+                else:
+                    print('Burn-in iter {:04d}'.format(i+1))
 
 
         print("Sampling phase started")
@@ -232,15 +243,19 @@ class SGLD(Sampler):
             params = [[p.clone().detach().data.numpy() for p in group['params']]
                   for group in self.param_groups]
             chain.append((params, True))
-            if print_loss:
-                with torch.no_grad():
-                    print('Sample iter {:04d} | loss {:.06f}'.format(i+1, closure(add_prior=False).item()))
-            else:
-                print('Sample iter {:04d}'.format(i+1))
+            sq_err_loss = closure(add_prior=False)
+            if arr_closure is not None:
+                arr_closure(self.loss, sq_err_loss)
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Sample iter {:04d} | loss {:.06f}'.format(i+1, sq_err_loss.item()))
+                else:
+                    print('Sample iter {:04d}'.format(i+1))
 
-            logp_array.append(-self.loss.item())
+            # logp_array.append(-self.loss.item())
         
-        return chain, logp_array
+        return chain#, logp_array
 
 class MMALA(Sampler):
     """
@@ -354,7 +369,7 @@ class MMALA(Sampler):
         return params, is_accepted
 
 
-    def sample(self, closure, num_samples=1000, burn_in=100, print_loss=False):
+    def sample(self, closure, num_samples=1000, burn_in=100, print_iters=True, print_loss=False):
         chain = self.samples
         logp_array = []
 
@@ -378,11 +393,12 @@ class MMALA(Sampler):
                     raise RuntimeError("Rejection step copying does not work")
             #####
             logp_array.append(-(self.loss.item()))
-            if print_loss:
-                with torch.no_grad():
-                    print('Burn-in iter {:04d} | loss {:.06f} | accepted={}'.format(i+1, closure(add_prior=False).item(), is_accepted))
-            else:
-                print('Burn-in iter {:04d} | accepted={}'.format(i+1, is_accepted))
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Burn-in iter {:04d} | loss {:.06f} | accepted={}'.format(i+1, closure(add_prior=False).item(), is_accepted))
+                else:
+                    print('Burn-in iter {:04d} | accepted={}'.format(i+1, is_accepted))
             
         print("Sampling phase started")
         for i in range(num_samples):
@@ -393,11 +409,12 @@ class MMALA(Sampler):
             self.step()
             chain.append(self.accept_or_reject(closure))
             logp_array.append(-(self.loss.item()))
-            if print_loss:
-                with torch.no_grad():
-                    print('Sample iter {:04d} | loss {:.06f} | accepted={}'.format(i+1, closure(add_prior=False).item(), is_accepted))
-            else:
-                print('Sample iter {:04d} | accepted={}'.format(i+1, is_accepted))
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Sample iter {:04d} | loss {:.06f} | accepted={}'.format(i+1, closure(add_prior=False).item(), is_accepted))
+                else:
+                    print('Sample iter {:04d} | accepted={}'.format(i+1, is_accepted))
 
         
         return chain, logp_array
@@ -488,7 +505,8 @@ class pSGLD(Sampler):
         return lr0/np.power(t0+alpha*t, gamma)
             
 
-    def sample(self, closure, num_samples=1000, burn_in=100, print_loss=False, clipping=False):
+    def sample(self, closure, num_samples=1000, burn_in=100, print_iters=True,
+               print_loss=False, arr_closure=None, clipping=False):
         '''
         Requires closure which provides the loss that is divide by the number of data points
         (including the prior part), that is , -logp(data, theta)/#(data points).
@@ -499,42 +517,52 @@ class pSGLD(Sampler):
 
         '''
         chain = self.samples
-        logp_array = []
+        # logp_array = []
 
         print("Burn-in phase started")
         for i in range(burn_in):
             self.zero_grad()
             self.loss = closure()
+            self.loss /= self.param_groups[0]['N']
             # print(self.loss)
             # print('Loss: {}'.format(self.loss))
             self.loss.backward()
             self.step(lr=self.get_lr(i), clipping=clipping)
             logp_array.append(-self.loss.item())
-            if print_loss:
-                with torch.no_grad():
-                    print('Burn-in iter {:04d} | loss {:.06f}'.format(i+1, closure(add_prior=False).item()))
-            else:
-                print('Burn-in iter {:04d}'.format(i+1))
+            sq_err_loss = closure(add_prior=False)
+            if arr_closure is not None:
+                arr_closure(self.loss, sq_err_loss)
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Burn-in iter {:04d} | loss {:.06f}'.format(i+1, sq_err_loss.item()))
+                else:
+                    print('Burn-in iter {:04d}'.format(i+1))
 
 
         print("Sampling phase started")
         for i in range(num_samples):
             self.zero_grad()
             self.loss = closure()
+            self.loss /= self.param_groups[0]['N']
             self.loss.backward()
             self.step(lr=self.get_lr(i+burn_in), clipping=clipping)
             params = [[p.clone().detach().data.numpy() for p in group['params']]
                   for group in self.param_groups]
             chain.append((params, True))
-            if print_loss:
-                with torch.no_grad():
-                    print('Sample iter {:04d} | loss {:.06f}'.format(i+1, closure(add_prior=False).item()))
-            else:
-                print('Sample iter {:04d}'.format(i+1))
+            sq_err_loss = closure(add_prior=False)
+            if arr_closure is not None:
+                arr_closure(self.loss, sq_err_loss)
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Sample iter {:04d} | loss {:.06f}'.format(i+1, sq_err_loss.item()))
+                else:
+                    print('Sample iter {:04d}'.format(i+1))
 
-            logp_array.append(-self.loss.item())
+            # logp_array.append(-self.loss.item())
         
-        return chain, logp_array
+        return chain# , logp_array
 
 
     ######### Deprecated ###############################
@@ -1019,7 +1047,8 @@ class HAMCMC(Sampler):
         alpha = self.param_groups[0]['lr_alpha']
         return lr0/np.power(t0+alpha*t, gamma)
             
-    def sample(self, closure, num_samples=1000, burn_in=100, print_loss=False, use_metric=True, use_old_lbfgs=False, add_noise=True):
+    def sample(self, closure, num_samples=1000, burn_in=100, print_iters=True,
+               print_loss=False, use_metric=True, use_old_lbfgs=False, add_noise=True):
         chain = self.samples
         logp_array = []
 
@@ -1039,11 +1068,12 @@ class HAMCMC(Sampler):
                     self.step_without_metric(lr=self.get_lr(i), update_metric=use_metric, add_noise=add_noise)
             logp_array.append(-(self.loss.item()))
             
-            if print_loss:
-                with torch.no_grad():
-                    print('Burn-in iter {:04d} | loss {:.06f}'.format(i+1, closure(add_prior=False).item()))
-            else:
-                print('Burn-in iter {:04d}'.format(i+1))
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Burn-in iter {:04d} | loss {:.06f}'.format(i+1, closure(add_prior=False).item()))
+                else:
+                    print('Burn-in iter {:04d}'.format(i+1))
             
         print("Sampling phase started")
         for i in range(num_samples):
@@ -1059,11 +1089,12 @@ class HAMCMC(Sampler):
                   for group in self.param_groups]
             chain.append((params, True))
             logp_array.append(-(self.loss.item()))
-            if print_loss:
-                with torch.no_grad():
-                    print('Sample iter {:04d} | loss {:.06f}'.format(i+1, closure(add_prior=False).item()))
-            else:
-                print('Sample iter {:04d}'.format(i+1))
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Sample iter {:04d} | loss {:.06f}'.format(i+1, closure(add_prior=False).item()))
+                else:
+                    print('Sample iter {:04d}'.format(i+1))
 
         
         return chain, logp_array

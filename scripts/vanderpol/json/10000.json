@@ -1,0 +1,12 @@
+{
+    "output": "exp/vanderpol/gp/",
+    "data": {"pickle_file": "data/vdp.pickle"},
+    "configs":
+    [
+        {"inf_type": "optim", "method": "Adam", "M": 6, "sf": 1,
+            "ell": 0.75, "lr": 5e-3, "num_iters": 50},
+        {"inf_type": "samplers", "method": "aSGHMC", "M": 6, "sf": 1,
+            "ell": 0.75, "lr": 5e-3, "burn_in": 50, "num_samples": 100,
+            "chain_start": 10, "thinning": 2}
+    ]
+}
