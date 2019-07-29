@@ -31,8 +31,16 @@ def get_banana_fns(x,y, a=0.2, b=2.0, c=1.0):
         cmap = cm.get_cmap('binary')
         cmap.set_under(color='w')
         ax.contourf(X, Y, Z, cmap=cmap, alpha=0.5, extend='both')
-        
-    return closure_banana, prob_banana, plot_contours_banana
+    
+    def plot_density_banana(ax, x_, y_):
+
+        ax.set_xlim(-6, 6)
+        ax.set_ylim(-12, 2)
+                        
+        sns.kdeplot(x_, y_, shade=True, ax=ax, cmap='binary', rasterized=True, shade_lowest=False, alpha=0.5)
+
+    
+    return closure_banana, prob_banana, plot_contours_banana, plot_density_banana
 
 
 def get_multimodal_fns(x,y, mixture=(0.5,0.5), means=([-1,-1], [1,1]),
@@ -68,7 +76,16 @@ def get_multimodal_fns(x,y, mixture=(0.5,0.5), means=([-1,-1], [1,1]),
         cmap.set_under(color='w')
         ax.contourf(X, Y, Z, cmap=cmap, alpha=0.5, extend='both')
         
-    return closure_multimodal, prob_multimodal, plot_contours_multimodal
+    def plot_density_multimodal(ax, x_, y_):
+
+        ax.set_xlim(-2*max([sigmas[i][0] for i in range(len(sigmas))]) + min([means[i][0] for i in range(len(means))]),
+                        2*max([sigmas[i][0] for i in range(len(sigmas))]) + max([means[i][0] for i in range(len(means))]))
+        ax.set_ylim(-2*max([sigmas[i][1] for i in range(len(sigmas))]) + min([means[i][1] for i in range(len(means))]),
+                        2*max([sigmas[i][1] for i in range(len(sigmas))]) + max([means[i][1] for i in range(len(means))]))
+                        
+        sns.kdeplot(x_, y_, shade=True, ax=ax, cmap='binary', rasterized=True, shade_lowest=False, alpha=0.5)
+
+    return closure_multimodal, prob_multimodal, plot_contours_multimodal, plot_density_multimodal
 
 
 def get_gauss_fns(x, y, sigma1, sigma2, corr):
@@ -95,14 +112,22 @@ def get_gauss_fns(x, y, sigma1, sigma2, corr):
         # ax.set_clim(vmin=np.min(Z), vmax=np.max(Z))
         ax.contourf(X, Y, Z, cmap=cmap, alpha=0.5, extend='both')
         
-    return closure_gauss, prob_gauss, plot_contours_gauss
+    def plot_density_gauss(ax, x_, y_):
+
+        ax.set_xlim(-max(sigma1*2,2)+2, max(2,sigma1*2)+2)
+        ax.set_ylim(-max(2,sigma2*2)+4, max(2,sigma2*2)+4)
+                        
+        sns.kdeplot(x_, y_, shade=True, ax=ax, cmap='binary', rasterized=True, shade_lowest=False, alpha=0.5)
+
+    
+    return closure_gauss, prob_gauss, plot_contours_gauss, plot_density_gauss
 
 
 def run_MALA(config, dists, output):
 
     out_path = os.path.join(output, 'MALA/')
     os.makedirs(out_path, exist_ok=True)
-    fig, ax = plt.subplots(ncols=len(dists), dpi=300, figsize=(8,2))
+    fig, ax = plt.subplots(ncols=len(dists), nrows=2, dpi=300, figsize=(10,5))
     plt.tight_layout()
     for distnum, (dist_name, dist) in enumerate(dists.items()):
         # closure, prob, plot_contours = dist['closure'], dist['prob'], dist['plot_contours']
@@ -111,46 +136,62 @@ def run_MALA(config, dists, output):
         params = [x, y]
 
         if 'banana' in dist_name:
-            closure, prob, plot_contours = get_banana_fns(x, y, *dist)
+            closure, prob, plot_contours, plot_density = get_banana_fns(x, y, *dist)
         if 'gauss' in dist_name:
-            closure, prob, plot_contours = get_gauss_fns(x, y, *dist)    
+            closure, prob, plot_contours, plot_density = get_gauss_fns(x, y, *dist)    
         if 'modal' in dist_name:
-            closure, prob, plot_contours = get_multimodal_fns(x, y, *dist)
+            closure, prob, plot_contours, plot_density = get_multimodal_fns(x, y, *dist)
 
         sampler = MALA(params, lr=config['lr'], add_noise=config['add_noise'])
-        chain, logp_array = sampler.sample(closure, burn_in=config['burn_in'],
+        chain = sampler.sample(closure, burn_in=config['burn_in'],
             num_samples=config['num_samples'], print_loss=config['print_loss'])
         
-        plot_contours(ax[distnum])
+        plot_contours(ax[0][distnum])
         for i, (sample, acc) in enumerate(chain[::config['thinning']]):
             x_, y_ = sample[0][0][0], sample[0][1][0]
             if acc:
-                ax[distnum].scatter(x_, y_, color='g', s=1)
+                ax[0][distnum].scatter(x_, y_, color='g', s=1)
             else:
-                ax[distnum].scatter(x_, y_, color='r', s=1)
+                ax[0][distnum].scatter(x_, y_, color='r', s=1)
 
-            x_mean = np.mean([sample[0][0][0] for sample, acc in chain[::config['thinning']] if acc])
-            y_mean = np.mean([sample[0][1][0] for sample, acc in chain[::config['thinning']] if acc]) 
-            ax[distnum].annotate('x_mean={:.02f}\ny_mean={:.02f}\nacc_rate={:.02f}'.format(x_mean, y_mean,
-                len([1 for _, acc in chain[:] if acc])/len(chain)),
-                xy=(0.88, 0.03), xycoords='axes fraction', fontsize=8,
-                textcoords='offset points', ha='right', va='bottom')
+        x_ = []
+        y_ = [] 
+        for i, (sample, acc) in enumerate(chain[:]):
+            if acc:
+                x_.append(sample[0][0][0])
+                y_.append(sample[0][1][0])
         
-            ax[distnum].set_title(dist_name)
-            sns.despine(bottom=False,
-                    left=False,
-                    right=True,
-                    top=True,
-                    ax=ax[distnum])
-            ax[distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
-            
-    fig.savefig(os.path.join(out_path, '{}.pdf'.format(config['id'])), adjustable='box')
+        plot_density(ax[1][distnum], x_, y_)
 
+        x_mean = np.mean([sample[0][0][0] for sample, acc in chain[::config['thinning']] if acc])
+        y_mean = np.mean([sample[0][1][0] for sample, acc in chain[::config['thinning']] if acc]) 
+        ax[0][distnum].annotate('x_mean={:.02f}\ny_mean={:.02f}'.format(x_mean, y_mean),
+            xy=(0.88, 0.03), xycoords='axes fraction', fontsize=8,
+            textcoords='offset points', ha='right', va='bottom')
+        
+        ax[0][distnum].set_title(dist_name)
+        sns.despine(bottom=False,
+                left=False,
+                right=True,
+                top=True,
+                ax=ax[0][distnum])
+        sns.despine(bottom=False,
+                left=False,
+                right=True,
+                top=True,
+                ax=ax[1][distnum])
+        ax[0][distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
+        ax[1][distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
+
+    plt.tight_layout()
+
+    fig.savefig(os.path.join(out_path, '{}.pdf'.format(config['id'])), adjustable='box')
+    
 def run_SGLD(config, dists, output):
 
     out_path = os.path.join(output, 'SGLD/')
     os.makedirs(out_path, exist_ok=True)
-    fig, ax = plt.subplots(ncols=len(dists), dpi=300, figsize=(8,2))
+    fig, ax = plt.subplots(ncols=len(dists), nrows=2, dpi=300, figsize=(10,5))
     plt.tight_layout()
     for distnum, (dist_name, dist) in enumerate(dists.items()):
         x = torch.nn.Parameter(x_init.clone().detach())
@@ -158,49 +199,66 @@ def run_SGLD(config, dists, output):
         params = [x, y]
 
         if 'banana' in dist_name:
-            closure, prob, plot_contours = get_banana_fns(x, y, *dist)
+            closure, prob, plot_contours, plot_density = get_banana_fns(x, y, *dist)
         if 'gauss' in dist_name:
-            closure, prob, plot_contours = get_gauss_fns(x, y, *dist)    
+            closure, prob, plot_contours, plot_density = get_gauss_fns(x, y, *dist)    
         if 'modal' in dist_name:
-            closure, prob, plot_contours = get_multimodal_fns(x, y, *dist)
+            closure, prob, plot_contours, plot_density = get_multimodal_fns(x, y, *dist)
 
         sampler = SGLD(params, lr0=config['lr0'], lr_gamma=config['lr_gamma'],
             lr_t0=config['lr_t0'], lr_alpha=config['lr_alpha'], lambda_=config['lambda_'],
             alpha=config['alpha'])
-        chain, logp_array = sampler.sample(closure, burn_in=config['burn_in'],
+        chain = sampler.sample(closure, burn_in=config['burn_in'],
             num_samples=config['num_samples'], print_loss=config['print_loss'])
         
-        plot_contours(ax[distnum])
+        plot_contours(ax[0][distnum])
         for i, (sample, acc) in enumerate(chain[::config['thinning']]):
             if acc:
                 x_, y_ = sample[0][0][0], sample[0][1][0]
-                ax[distnum].scatter(x_, y_, color='g', s=1)
-                
+                ax[0][distnum].scatter(x_, y_, color='g', s=1)
+
+        x_ = []
+        y_ = [] 
+        for i, (sample, acc) in enumerate(chain[:]):
+            if acc:
+                x_.append(sample[0][0][0])
+                y_.append(sample[0][1][0])
+        
+        plot_density(ax[1][distnum], x_, y_)
+
         # Compute mean by weighing with the step sizes
         wt = [sampler.get_lr(i*config['thinning']+config['burn_in'])\
-                for i in range(len(chain[::config['thinning']]))]
+                for i, _ in enumerate(chain[::config['thinning']])]
         wt = np.array(wt)/np.sum(wt)
-        x_mean = np.sum([wt[i]*sample[0][0][0] for i, (sample, acc) in enumerate(chain[::config['thinning']]) if acc])
-        y_mean = np.sum([wt[i]*sample[0][1][0] for i, (sample, acc) in enumerate(chain[::config['thinning']]) if acc]) 
-        ax[distnum].annotate('x_mean={:.02f}\ny_mean={:.02f}'.format(x_mean, y_mean),
+        x_mean = np.sum([wt[i]*sample[0][0][0] for i,(sample, acc) in enumerate(chain[::config['thinning']]) if acc])
+        y_mean = np.sum([wt[i]*sample[0][1][0] for i,(sample, acc) in enumerate(chain[::config['thinning']]) if acc])
+
+        ax[0][distnum].annotate('x_mean={:.02f}\ny_mean={:.02f}'.format(x_mean, y_mean),
             xy=(0.88, 0.03), xycoords='axes fraction', fontsize=8,
             textcoords='offset points', ha='right', va='bottom')
         
-        ax[distnum].set_title(dist_name)
+        ax[0][distnum].set_title(dist_name)
         sns.despine(bottom=False,
                 left=False,
                 right=True,
                 top=True,
-                ax=ax[distnum])
-        ax[distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
-        
+                ax=ax[0][distnum])
+        sns.despine(bottom=False,
+                left=False,
+                right=True,
+                top=True,
+                ax=ax[1][distnum])
+        ax[0][distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
+        ax[1][distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
+
     fig.savefig(os.path.join(out_path, '{}.pdf'.format(config['id'])), adjustable='box')
+
 
 def run_pSGLD(config, dists, output):
 
     out_path = os.path.join(output, 'pSGLD/')
     os.makedirs(out_path, exist_ok=True)
-    fig, ax = plt.subplots(ncols=len(dists), dpi=300, figsize=(8,2))
+    fig, ax = plt.subplots(ncols=len(dists), nrows=2, dpi=300, figsize=(10,5))
     plt.tight_layout()
     for distnum, (dist_name, dist) in enumerate(dists.items()):
         x = torch.nn.Parameter(x_init.clone().detach())
@@ -208,43 +266,58 @@ def run_pSGLD(config, dists, output):
         params = [x, y]
 
         if 'banana' in dist_name:
-            closure, prob, plot_contours = get_banana_fns(x, y, *dist)
+            closure, prob, plot_contours, plot_density = get_banana_fns(x, y, *dist)
         if 'gauss' in dist_name:
-            closure, prob, plot_contours = get_gauss_fns(x, y, *dist)    
+            closure, prob, plot_contours, plot_density = get_gauss_fns(x, y, *dist)    
         if 'modal' in dist_name:
-            closure, prob, plot_contours = get_multimodal_fns(x, y, *dist)
+            closure, prob, plot_contours, plot_density = get_multimodal_fns(x, y, *dist)
 
         sampler = pSGLD(params, lr0=config['lr0'], lr_gamma=config['lr_gamma'],
             lr_t0=config['lr_t0'], lr_alpha=config['lr_alpha'], lambda_=config['lambda_'],
             alpha=config['alpha'])
-        chain, logp_array = sampler.sample(closure, burn_in=config['burn_in'],
+        chain = sampler.sample(closure, burn_in=config['burn_in'],
             num_samples=config['num_samples'], print_loss=config['print_loss'])
         
-        plot_contours(ax[distnum])
+        plot_contours(ax[0][distnum])
         for i, (sample, acc) in enumerate(chain[::config['thinning']]):
             if acc:
                 x_, y_ = sample[0][0][0], sample[0][1][0]
-                ax[distnum].scatter(x_, y_, color='g', s=1)
+                ax[0][distnum].scatter(x_, y_, color='g', s=1)
+
+        x_ = []
+        y_ = [] 
+        for i, (sample, acc) in enumerate(chain[:]):
+            if acc:
+                x_.append(sample[0][0][0])
+                y_.append(sample[0][1][0])
+        
+        plot_density(ax[1][distnum], x_, y_)
 
         # Compute mean by weighing with the step sizes
         wt = [sampler.get_lr(i*config['thinning']+config['burn_in'])\
-                for i in range(len(chain[::config['thinning']]))]
+                for i, _ in enumerate(chain[::config['thinning']])]
         wt = np.array(wt)/np.sum(wt)
-        x_mean = np.sum([wt[i]*sample[0][0][0] for sample, acc in chain[::config['thinning']] if acc])
-        y_mean = np.sum([wt[i]*sample[0][1][0] for sample, acc in chain[::config['thinning']] if acc])
+        x_mean = np.sum([wt[i]*sample[0][0][0] for i,(sample, acc) in enumerate(chain[::config['thinning']]) if acc])
+        y_mean = np.sum([wt[i]*sample[0][1][0] for i,(sample, acc) in enumerate(chain[::config['thinning']]) if acc])
 
-        ax[distnum].annotate('x_mean={:.02f}\ny_mean={:.02f}'.format(x_mean, y_mean),
+        ax[0][distnum].annotate('x_mean={:.02f}\ny_mean={:.02f}'.format(x_mean, y_mean),
             xy=(0.88, 0.03), xycoords='axes fraction', fontsize=8,
             textcoords='offset points', ha='right', va='bottom')
         
-        ax[distnum].set_title(dist_name)
+        ax[0][distnum].set_title(dist_name)
         sns.despine(bottom=False,
                 left=False,
                 right=True,
                 top=True,
-                ax=ax[distnum])
-        ax[distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
-        
+                ax=ax[0][distnum])
+        sns.despine(bottom=False,
+                left=False,
+                right=True,
+                top=True,
+                ax=ax[1][distnum])
+        ax[0][distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
+        ax[1][distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
+
     fig.savefig(os.path.join(out_path, '{}.pdf'.format(config['id'])), adjustable='box')
 
 def run_aSGHMC(config, dists, output):
@@ -252,61 +325,78 @@ def run_aSGHMC(config, dists, output):
     out_path = os.path.join(output, 'aSGHMC/')
     
     os.makedirs(out_path, exist_ok=True)
-    fig, ax = plt.subplots(ncols=len(dists), dpi=300, figsize=(8,2))
-    plt.tight_layout()
+    fig, ax = plt.subplots(ncols=len(dists), nrows=2, dpi=300, figsize=(10,5))
+    # fig2, ax2 = plt.subplots(ncols=len(dists), dpi=300, figsize=(8,2))
     for distnum, (dist_name, dist) in enumerate(dists.items()):
         x = torch.nn.Parameter(x_init.clone().detach())
         y = torch.nn.Parameter(y_init.clone().detach())
         params = [x, y]
 
         if 'banana' in dist_name:
-            closure, prob, plot_contours = get_banana_fns(x, y, *dist)
+            closure, prob, plot_contours, plot_density = get_banana_fns(x, y, *dist)
         if 'gauss' in dist_name:
-            closure, prob, plot_contours = get_gauss_fns(x, y, *dist)    
+            closure, prob, plot_contours, plot_density = get_gauss_fns(x, y, *dist)    
         if 'modal' in dist_name:
-            closure, prob, plot_contours = get_multimodal_fns(x, y, *dist)
+            closure, prob, plot_contours, plot_density = get_multimodal_fns(x, y, *dist)
 
         sampler = aSGHMC(params, mom_decay=config['mom_decay'], lr=config['lr'], lambda_=config['lambda_'])
-        chain, logp_array = sampler.sample(closure, burn_in=config['burn_in'],
+        chain = sampler.sample(closure, burn_in=config['burn_in'],
             num_samples=config['num_samples'], print_loss=config['print_loss'])
         
-        plot_contours(ax[distnum])
+        plot_contours(ax[0][distnum])
         for i, (sample, acc) in enumerate(chain[::config['thinning']]):
             x_, y_ = sample[0][0][0], sample[0][1][0]
             if acc:
-                ax[distnum].scatter(x_, y_, color='g', s=1)
+                ax[0][distnum].scatter(x_, y_, color='g', s=1)
             else:
-                ax[distnum].scatter(x_, y_, color='r', s=1)
+                ax[0][distnum].scatter(x_, y_, color='r', s=1)
 
+        x_ = []
+        y_ = [] 
+        for i, (sample, acc) in enumerate(chain[:]):
+            if acc:
+                x_.append(sample[0][0][0])
+                y_.append(sample[0][1][0])
+        
+        plot_density(ax[1][distnum], x_, y_)
 
         x_mean = np.mean([sample[0][0][0] for sample, acc in chain[::config['thinning']] if acc])
         y_mean = np.mean([sample[0][1][0] for sample, acc in chain[::config['thinning']] if acc]) 
-        ax[distnum].annotate('x_mean={:.02f}\ny_mean={:.02f}'.format(x_mean, y_mean),
+        ax[0][distnum].annotate('x_mean={:.02f}\ny_mean={:.02f}'.format(x_mean, y_mean),
             xy=(0.88, 0.03), xycoords='axes fraction', fontsize=8,
             textcoords='offset points', ha='right', va='bottom')
         
-        ax[distnum].set_title(dist_name)
+        ax[0][distnum].set_title(dist_name)
         sns.despine(bottom=False,
                 left=False,
                 right=True,
                 top=True,
-                ax=ax[distnum])
-        ax[distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
+                ax=ax[0][distnum])
+        sns.despine(bottom=False,
+                left=False,
+                right=True,
+                top=True,
+                ax=ax[1][distnum])
+        ax[0][distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
+        ax[1][distnum].xaxis.set_major_locator(ticker.MaxNLocator(5))
+
+    plt.tight_layout()
 
     fig.savefig(os.path.join(out_path, '{}.pdf'.format(config['id'])), adjustable='box')
+    # fig2.savefig(os.path.join(out_path, '{}-estimated.pdf'.format(config['id'])), adjustable='box')
 
 def worker(config, dists, output):
-    try:
-        if config['sampler'] == 'MALA':
-            run_MALA(config=config, dists=dists, output=output)
-        if config['sampler'] == 'SGLD':
-            run_SGLD(config=config, dists=dists, output=output)
-        if config['sampler'] == 'pSGLD':
-            run_pSGLD(config=config, dists=dists, output=output)
-        if config['sampler'] == 'aSGHMC':
-            run_aSGHMC(config=config, dists=dists, output=output)
-    except Exception as e:
-        print("Encountered error while sampling with {}:\n{}".format(config['sampler'], str(e)))
+    # try:
+    if config['sampler'] == 'MALA':
+        run_MALA(config=config, dists=dists, output=output)
+    if config['sampler'] == 'SGLD':
+        run_SGLD(config=config, dists=dists, output=output)
+    if config['sampler'] == 'pSGLD':
+        run_pSGLD(config=config, dists=dists, output=output)
+    if config['sampler'] == 'aSGHMC':
+        run_aSGHMC(config=config, dists=dists, output=output)
+    # except Exception as e:
+    #     print("Encountered error while sampling with {}:\n{}".format(config['sampler'], e))
 
 
 if __name__=='__main__':
@@ -342,7 +432,7 @@ if __name__=='__main__':
         # 'bimodal': [],
         'multimodal1': [(0.3,0.3,0.2, 0.2), ([-1,-0.5], [-1,1.5], [1,-1.5], [2,1]),
                        ([1,0.5],[1.5,0.3],[0.8,0.5],[1.0,0.2]), (0.5,-0.5, -0.7, 0.2)],
-        'multimodal2':[[1./36.]*25.,
+        'multimodal2':[[1./36.]*25,
                        [[2.*(i+1)-5., 2.*(j+1)-5.] for i in range(5) for j in range(5)],
                        [[0.4,0.4] for i in range(25)],
                        [0.]*25],

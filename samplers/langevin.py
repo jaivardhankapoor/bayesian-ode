@@ -448,6 +448,8 @@ class pSGLD(Sampler):
             defaults['alpha'] = 0.99
         if 'lambda_' not in defaults:
             defaults['lambda_'] = 1e-5
+        if 'N' not in defaults:
+            defaults['N'] = 1
         super().__init__(params, defaults)
         
         self.logp = None
