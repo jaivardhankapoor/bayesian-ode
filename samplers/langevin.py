@@ -528,7 +528,7 @@ class pSGLD(Sampler):
             # print('Loss: {}'.format(self.loss))
             self.loss.backward()
             self.step(lr=self.get_lr(i), clipping=clipping)
-            logp_array.append(-self.loss.item())
+            # logp_array.append(-self.loss.item())
             sq_err_loss = closure(add_prior=False)
             if arr_closure is not None:
                 arr_closure(self.loss, sq_err_loss)

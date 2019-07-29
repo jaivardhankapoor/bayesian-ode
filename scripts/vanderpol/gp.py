@@ -18,7 +18,7 @@ import matplotlib.ticker as ticker
 import seaborn as sns
 
 
-from samplers.langevin import MALA, MMALA, pSGLD, HAMCMC, HAMCMC2, HAMCMC3, HAMCMC4
+from samplers.langevin import MALA, SGLD, pSGLD
 from samplers.hamiltonian import aSGHMC
 
 
@@ -63,6 +63,13 @@ class KernelRegression(torch.nn.Module):
 
 def run_optim(config, data, output):
 
+    out_dir = os.path.join(output, config['method'])
+    if 'dir_name' in config:
+        out_dir = os.path.join(out_dir, str(config['id'])+config['dir_name'])
+    else:
+        out_dir = os.path.join(out_dir, str(config['id']))
+    os.makedirs(out_dir, exist_ok=True)
+
     # create variables, functions etc
     M   = config['M'] # MxM inducing grid
     D   = 2
@@ -106,7 +113,7 @@ def run_optim(config, data, output):
     if 'RMSprop' in config['method']:
         if 'rmsprop_alpha' not in config:
             config['rmsprop_alpha'] = 0.99
-        optim = torch.optim.RMSprop(params, lr=config['lr'], alpha=config['alpha'])
+        optim = torch.optim.RMSprop(params, lr=config['lr'], alpha=config['rmsprop_alpha'])
     if 'Adadelta' in config['method']:
         if 'adadelta_rho' not in config:
             config['adadelta_rho'] = 0.9
@@ -156,7 +163,7 @@ def run_optim(config, data, output):
         loss = closure()
         loss.backward()
         if config['method']=='LBFGS':
-            lbfgs.step(closure)
+            optim.step(closure)
         else:
             optim.step()
 
@@ -167,25 +174,18 @@ def run_optim(config, data, output):
                     raise RuntimeError('Encountered NaN values in inference, method {}'.format(config['method']))
                     break
                 sq_err_loss = torch.sum((Yt-xode)**2 )
-                print('Iter {:04d} | Total Loss {:.6f} | Sq. err. Loss {:.6f}'.format(itr, loss.item(), sq_err_loss.item()))
+                # print('Iter {:04d} | Total Loss {:.6f} | Sq. err. Loss {:.6f}'.format(itr, loss.item(), sq_err_loss.item()))
                 total_loss_arr.append(loss.item())
                 sq_err_loss_arr.append(sq_err_loss.item())
 
     ## Plot results
-    out_dir = os.path.join(output, config['method'])
-    if 'dir_name' in config:
-        out_dir = os.path.join(out_dir, config['id']+config['dir_name'])
-    else:
-        out_dir = os.path.join(out_dir, config['id'])
-
-    os.makedirs(out_dir, exist_ok=True)
 
     # Plot losses
     fig, ax = plt.subplots()
     ax.plot(total_loss_arr)
     ax.set_xlabel('Iteration')
     ax.set_ylabel('Negative log posterior')
-    fig.savefig(os.path.join(out_dir, '{}_final{}.pdf'.format('post', str(final_loss_arr[-1]))), adjustable='box')
+    fig.savefig(os.path.join(out_dir, '{}_final{}.pdf'.format('post', str(total_loss_arr[-1]))), adjustable='box')
     
     fig, ax = plt.subplots()
     ax.plot(sq_err_loss_arr)
@@ -251,6 +251,14 @@ def run_optim(config, data, output):
     
 def run_sampler(config, data, output):
 
+    out_dir = os.path.join(output, config['method'])
+    if 'dir_name' in config:
+        out_dir = os.path.join(out_dir, str(config['id'])+config['dir_name'])
+    else:
+        out_dir = os.path.join(out_dir, str(config['id']))
+    os.makedirs(out_dir, exist_ok=True)
+
+    
     # create variables, functions etc
     M   = config['M'] # MxM inducing grid
     D   = 2
@@ -330,20 +338,12 @@ def run_sampler(config, data, output):
 
     chain_ = chain[config['chain_start']::config['thinning']]
 
-    ## Plot results
-    out_dir = os.path.join(output, config['method'])
-    if 'dir_name' in config:
-        out_dir = os.path.join(out_dir, config['id']+config['dir_name'])
-    else:
-        out_dir = os.path.join(out_dir, config['id'])
-    os.makedirs(out_dir, exist_ok=True)
-
     # Plot losses
     fig, ax = plt.subplots()
     ax.plot(total_loss_arr)
     ax.set_xlabel('Iteration')
     ax.set_ylabel('Negative log posterior')
-    fig.savefig(os.path.join(out_dir, '{}_best{}.pdf'.format('post', str(np.min(final_loss_arr)))), adjustable='box')
+    fig.savefig(os.path.join(out_dir, '{}_best{}.pdf'.format('post', str(np.min(total_loss_arr)))), adjustable='box')
     
     fig, ax = plt.subplots()
     ax.plot(sq_err_loss_arr)
