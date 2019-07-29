@@ -68,7 +68,11 @@ def run_optim(config, data, output):
         out_dir = os.path.join(out_dir, str(config['id'])+config['dir_name'])
     else:
         out_dir = os.path.join(out_dir, str(config['id']))
+
     os.makedirs(out_dir, exist_ok=True)
+
+    with open(os.path.join(out_dir, str(args.id)+".json"), 'w') as f:
+        json.dump(config, f)
 
     # create variables, functions etc
     M   = config['M'] # MxM inducing grid
@@ -110,6 +114,8 @@ def run_optim(config, data, output):
         optim = torch.optim.LBFGS(params, lr=config['lr'])
     if 'SGD' in config['method']:
         optim = torch.optim.SGD(params, lr=config['lr'])
+    if 'nag' in config['method']:
+        optim = torch.optim.SGD(params, lr=config['lr'], nesterov=True)
     if 'RMSprop' in config['method']:
         if 'rmsprop_alpha' not in config:
             config['rmsprop_alpha'] = 0.99
@@ -256,7 +262,11 @@ def run_sampler(config, data, output):
         out_dir = os.path.join(out_dir, str(config['id'])+config['dir_name'])
     else:
         out_dir = os.path.join(out_dir, str(config['id']))
+        
     os.makedirs(out_dir, exist_ok=True)
+
+    with open(os.path.join(out_dir, str(args.id)+".json"), 'w') as f:
+        json.dump(config, f)
 
     
     # create variables, functions etc

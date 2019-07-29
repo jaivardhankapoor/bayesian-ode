@@ -15,7 +15,7 @@ DEFAULT_VALUES = {
     "burn_in": 3000,
     "num_samples": 5000,
     "thinning": 50, ## change this
-    "chain_start": 0,
+    "chain_start": 2000,
     "num_iters": 1000,
     "lr": 1e-3,
     "lr_decay": 0.03,
@@ -64,12 +64,12 @@ json_iter = 1
 # Adam
 id_=1
 LR = [1e-3,5e-3,1e-2]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
 NUM_ITERS = 1000
 # LR = [1e-3]
-# M = [6]
-# ELL = [0.75]
+M = [6]
+ELL = [0.75]
 
 for lr, m, ell in itertools.product(LR, M, ELL):
     config = {}
@@ -100,13 +100,13 @@ for lr, m, ell in itertools.product(LR, M, ELL):
 
 # LBFGS
 id_=1
-LR = [1e-4,3e-4]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
-NUM_ITERS = 500
+LR = [3e-5, 1e-4, 3e-4, 1e-3]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
+NUM_ITERS = 1000
 # LR = [1e-3]
-# M = [6]
-# ELL = [0.75]
+M = [6]
+ELL = [0.75]
 
 for lr, m, ell in itertools.product(LR, M, ELL):
     config = {}
@@ -137,13 +137,13 @@ for lr, m, ell in itertools.product(LR, M, ELL):
 
 # SGD
 id_=1
-LR = [3e-4, 1e-3, 3e-3, 1e-2]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
-NUM_ITERS = 1500
+LR = [1e-4, 3e-4, 1e-3, 3e-3, 1e-2]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
+NUM_ITERS = 2000
 # LR = [1e-4]
-# M = [6]
-# ELL = [0.75]
+M = [6]
+ELL = [0.75]
 
 for lr, m, ell in itertools.product(LR, M, ELL):
     config = {}
@@ -175,15 +175,15 @@ for lr, m, ell in itertools.product(LR, M, ELL):
 
 # SGD+mom
 id_=1
-LR = [3e-4, 1e-3, 3e-3, 1e-2]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
-MOM = [0.9,0.95,0.98,0.99]
-NUM_ITERS = 1000
+LR = [3e-5, 1e-4, 3e-4]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
+# MOM = [0.9,0.95,0.98,0.99]
+NUM_ITERS = 1500
 # LR = [1e-3]
-# M = [6]
-# ELL = [0.75]
-# MOM = [0.99]
+M = [6]
+ELL = [0.75]
+MOM = [0.99]
 
 for lr, m, ell, mom in itertools.product(LR, M, ELL, MOM):
     config = {}
@@ -214,19 +214,61 @@ for lr, m, ell, mom in itertools.product(LR, M, ELL, MOM):
 
     json_iter += 1
 
+
+# SGD+mom+nag
+id_=1
+LR = [3e-5, 1e-4, 3e-4]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
+# MOM = [0.9,0.95,0.98,0.99]
+NUM_ITERS = 1500
+# LR = [1e-3]
+M = [6]
+ELL = [0.75]
+MOM = [0.99]
+
+for lr, m, ell, mom in itertools.product(LR, M, ELL, MOM):
+    config = {}
+    config["output"] = OUT_PATH
+    config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
+    config["configs"] = []
+    config["configs"].append({
+        "inf_type": "optim",
+        "method": "SGD+mom+nag",
+        "M": m,
+        "sf": DEFAULT_VALUES["sf"],
+        "ell": ell,
+        "lr": lr,
+        "num_iters": NUM_ITERS,
+        "id": id_,
+        "lr_decay": DEFAULT_VALUES["lr_decay"],
+        "mom": mom,
+    })
+    dir_name = ''
+    for k in SENSIBLE_PARAMS:
+        if k in config["configs"][0]:
+            dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
+    config["configs"][0]["dir_name"] = dir_name
+    id_ += 1
+
+    with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
+        json.dump(config, f)
+
+    json_iter += 1
+
 # RMSprop
 id_ = 1
-LR = [3e-4, 1e-3, 3e-3, 1e-2]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
+LR = [1e-4, 3e-4, 1e-3]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
 LR_DECAY = [0, 0.02]
-ALPHA = [0.95, 0.98, 0.99]
-NUM_ITERS = 1000
+# ALPHA = [0.95, 0.98, 0.99]
+NUM_ITERS = 1500
 # LR = [1e-3]
-# M = [6]
-# ELL = [0.75]
+M = [6]
+ELL = [0.75]
 # LR_DECAY = [0.02]
-# ALPHA = [0.99]
+ALPHA = [0.99]
 for lr, m, ell, lrdec, alpha in itertools.product(LR, M, ELL, LR_DECAY, ALPHA):
     config = {}
     config["output"] = OUT_PATH
@@ -258,19 +300,19 @@ for lr, m, ell, lrdec, alpha in itertools.product(LR, M, ELL, LR_DECAY, ALPHA):
 
 # RMSprop+mom
 id_ = 1
-LR = [3e-4, 1e-3, 3e-3, 1e-2]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
+LR = [3e-4, 1e-4, 3e-4, 1e-3, 3e-3, ]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
 LR_DECAY = [0.01, 0.03]
 ALPHA = [0.96, 0.99]
-MOM = [0.9, 0.95, 0.99]
+# MOM = [0.9, 0.95, 0.99]
 NUM_ITERS = 1000
 # LR = [1e-3]
-# M = [6]
-# ELL = [0.75]
+M = [6]
+ELL = [0.75]
 # LR_DECAY = [0.02]
 # ALPHA = [0.99]
-# MOM = [0.98]
+MOM = [0.98]
 for lr, m, ell, lrdec, alpha, mom in itertools.product(LR, M, ELL, LR_DECAY, ALPHA, MOM):
     config = {}
     config["output"] = OUT_PATH
@@ -304,15 +346,15 @@ for lr, m, ell, lrdec, alpha, mom in itertools.product(LR, M, ELL, LR_DECAY, ALP
 
 # Adadelta
 id_ = 1
-LR = [3e-4, 1e-3, 3e-3, 1e-2]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
-LR_DECAY = [0.0, 0.03, 0.1]
+LR = [5e-5, 1e-4, 3e-4, 1e-3]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
+# LR_DECAY = [0.0, 0.03, 0.1]
 NUM_ITERS = 1000
 # LR = [1e-3]
-# M = [6]
-# ELL = [0.75]
-# LR_DECAY = [0.02]
+M = [6]
+ELL = [0.75]
+LR_DECAY = [0.02]
 for lr, m, ell, lrdec in itertools.product(LR, M, ELL, LR_DECAY):
     config = {}
     config["output"] = OUT_PATH
@@ -347,16 +389,16 @@ for lr, m, ell, lrdec in itertools.product(LR, M, ELL, LR_DECAY):
 
 # MALA
 id_=1
-LR = [1e-4, 3e-4, 1e-3]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
-NOISE = [0.03, 0.1, 0.3, 1.0]
+LR = [2e-5, 5e-5, 1e-4, 3e-4]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
+# NOISE = [0.03, 0.1, 0.3, 1.0]
 BURN_IN = DEFAULT_VALUES["burn_in"]//1
 NUM_SAMPLES = DEFAULT_VALUES["num_samples"]//1
 # LR = [1e-4]
-# M = [6]
-# ELL = [0.75]
-# NOISE = [0.1]
+M = [6]
+ELL = [0.75]
+NOISE = [0.1]
 
 for lr, m, ell, noise in itertools.product(LR, M, ELL, NOISE):
     config = {}
@@ -392,17 +434,17 @@ for lr, m, ell, noise in itertools.product(LR, M, ELL, NOISE):
 
 # SGLD
 id_=1
-LR0 = [1e-3, 3e-3, 1e-2]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
-NOISE = [0.03, 0.1, 0.3, 1.0]
+LR0 = [3e-5, 1e-4, 3e-4, 1e-3]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
+# NOISE = [0.03, 0.1, 0.3, 1.0]
 LR_ALPHA = [0.03, 0.1]
 BURN_IN = DEFAULT_VALUES["burn_in"]//1 + 1000
 NUM_SAMPLES = DEFAULT_VALUES["num_samples"]//1 - 1000
 # LR0 = [1e-3]
-# M = [6]
-# ELL = [0.75]
-# NOISE = [0.1]
+M = [6]
+ELL = [0.75]
+NOISE = [0.1]
 # LR_ALPHA = [0.1]
 for lr0, m, ell, noise, lr_alpha in itertools.product(LR, M, ELL, NOISE, LR_ALPHA):
     config = {}
@@ -441,18 +483,18 @@ for lr0, m, ell, noise, lr_alpha in itertools.product(LR, M, ELL, NOISE, LR_ALPH
 
 # pSGLD
 id_=1
-LR0 = [1e-3, 3e-3, 1e-2]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
-NOISE = [0.03, 0.1, 0.3, 1.0]
+LR0 = [5e-5, 1e-4, 3e-4, 1e-3, 3e-3]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
+# NOISE = [0.03, 0.1, 0.3, 1.0]
 LR_ALPHA = [0.03, 0.1]
 ALPHA = [0.96, 0.99]
 BURN_IN = DEFAULT_VALUES["burn_in"]//1 + 1000
 NUM_SAMPLES = DEFAULT_VALUES["num_samples"]//1 - 1000
 # LR0 = [1e-3]
-# M = [6]
-# ELL = [0.75]
-# NOISE = [0.1]
+M = [6]
+ELL = [0.75]
+NOISE = [0.1]
 # LR_ALPHA = [0.1]
 # ALPHA = [0.99]
 
@@ -495,16 +537,16 @@ for lr0, m, ell, noise, lr_alpha, alpha in itertools.product(LR, M, ELL, NOISE, 
 
 # aSGHMC
 id_=1
-LR = [1e-3, 3e-3, 1e-2, 3e-2]
-M = [4,5,6]
-ELL = [0.5, 0.75, 1, 1.25]
-NOISE = [0.03, 0.1, 0.3, 1.0]
+LR = [1e-4, 3e-4, 1e-3, 3e-3, 1e-2]
+# M = [4,5,6]
+# ELL = [0.5, 0.75, 1, 1.25]
+# NOISE = [0.03, 0.1, 0.3, 1.0]
 BURN_IN = DEFAULT_VALUES["burn_in"]//1
 NUM_SAMPLES = DEFAULT_VALUES["num_samples"]//1
 # LR = [1e-2]
-# M = [6]
-# ELL = [0.75]
-# NOISE = [0.1]
+M = [6]
+ELL = [0.75]
+NOISE = [0.1]
 
 for lr, m, ell, noise in itertools.product(LR, M, ELL, NOISE):
     config = {}
