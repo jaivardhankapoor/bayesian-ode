@@ -29,6 +29,15 @@ class VDP(torch.nn.Module):
     def forward(self, t, x):
         return torch.cat([x[:,1:2], 1*(1-x[:,0:1]**2)*x[:,1:2]-x[:,0:1]],1)
 
+class FHN(torch.nn.Module):
+    def forward(self, t, x):
+        return torch.cat([3*(x[:,0:1]-x[:,0:1]**3/3.+x[:,1:2]), (0.2-3*x[:,0:1]-0.2*x[:,1:2])/3.], 1)
+
+class LV(torch.nn.Module):
+    def forward(self, t, x):
+        return torch.cat([1.5*x[:,0:1]-x[:,0:1]*x[:,1:2], -3*x[:,1:2]+x[:,0:1]*x[:,1:2]], 1)
+    
+
 def K(X1, X2, sf, ell):
     dist = sq_dist(X1, X2, ell)
     return sf**2 * torch.exp(-dist / 2)
@@ -81,7 +90,7 @@ def run_optim(config, data, output):
     sf  = config['sf']
     ell = config['ell']
 
-    N, R, noise, x0, t, X, Y = data.values()
+    N, R, noise, x0, t, X, Y, ode_type = data.values()
     if 'noise' in config:
         noise = config['noise']
 
@@ -116,10 +125,10 @@ def run_optim(config, data, output):
                       history_size=config['history_size'])
     if 'SGD' in config['method']:
         optim = torch.optim.SGD(params, lr=config['lr'])
-        torch.nn.utils.clip_grad_norm(params, config["clip"])
+        torch.nn.utils.clip_grad_norm_(params, config["clip"])
     if 'nag' in config['method']:
         optim = torch.optim.SGD(params, lr=config['lr'], momentum=0.5, nesterov=True)
-        torch.nn.utils.clip_grad_norm(params, config["clip"])
+        torch.nn.utils.clip_grad_norm_(params, config["clip"])
     if 'RMSprop' in config['method']:
         if 'rmsprop_alpha' not in config:
             config['rmsprop_alpha'] = 0.99
@@ -236,27 +245,40 @@ def run_optim(config, data, output):
     ax.set_ylabel('Velocity')
     fig.savefig(os.path.join(out_dir, '{}.pdf'.format('phaseplot')), adjustable='box')
 
-    # plot real vs modeled samples
-    R_= 2
-    x0_ = torch.from_numpy(2*R_*ss.uniform.rvs(size=[10,2])-R_)
-    t_ = torch.linspace(0., 28., 160)
-    xode_gp = odeint(kreg, x0_, t_).detach().numpy()
-    xode_gp = np.transpose(xode_gp,[1,0,2])
+    # plot real vs modeled samples (3 different plots to choose the best)
+    for plot_itr in range(3):
+        R_= R
+        x0_ = None
+        if ode_type == "LV":
+            x0_ = torch.from_numpy(R*ss.beta.rvs(size=[N,2], a=1, b=1.5)+ [3., 1.5])
+        else:
+            x0_ = torch.from_numpy(2*R_*ss.uniform.rvs(size=[10,2])-R_)
+            
+        t_ = torch.linspace(0., 28., 160)
+        xode_gp = odeint(kreg, x0_, t_).detach().numpy()
+        xode_gp = np.transpose(xode_gp,[1,0,2])
 
-    xode_real = odeint(VDP(), x0_, t_).detach().numpy()
-    xode_real = np.transpose(xode_real,[1,0,2])
+        ode_func = None
+        if ode_type == "VDP":
+            ode_func = VDP
+        if ode_type == "LV":
+            ode_func = LV
+        if ode_type == "FHN":
+            ode_func = FHN
+        xode_real = odeint(ode_func(), x0_, t_).detach().numpy()
+        xode_real = np.transpose(xode_real,[1,0,2])
 
-    num_plots = 3
-    fig, ax = plt.subplots(ncols=num_plots, figsize=(15,3))
-    axes = ax
-    for i in range(num_plots):
-        axes[i].plot(xode_real[i,0:80,0],'-',color='k', label='pos_real')
-        axes[i].plot(xode_gp[i,0:80,0],'--',color='k', label='pos_gp')
-        axes[i].plot(xode_real[i,0:80,1],'-',color='gray', label='vel_real')
-        axes[i].plot(xode_gp[i,0:80,1],'--',color='gray', label='vel_gp')
-        axes[i].legend()
+        num_plots = 3
+        fig, ax = plt.subplots(ncols=num_plots, figsize=(15,3))
+        axes = ax
+        for i in range(num_plots):
+            axes[i].plot(xode_real[i,0:80,0],'-',color='k', label='pos_real')
+            axes[i].plot(xode_gp[i,0:80,0],'--',color='k', label='pos_gp')
+            axes[i].plot(xode_real[i,0:80,1],'-',color='gray', label='vel_real')
+            axes[i].plot(xode_gp[i,0:80,1],'--',color='gray', label='vel_gp')
+            axes[i].legend()
 
-    fig.savefig(os.path.join(out_dir, '{}.pdf'.format('sample_trajectories')), adjustable='box')
+        fig.savefig(os.path.join(out_dir, '{}-{}.pdf'.format('sample_trajectories', plot_itr+1)), adjustable='box')
 
     
 def run_sampler(config, data, output):
@@ -279,7 +301,7 @@ def run_sampler(config, data, output):
     sf  = config['sf']
     ell = config['ell']
 
-    N, R, noise, x0, t, X, Y = data.values()
+    N, R, noise, x0, t, X, Y, ode_type = data.values()
     if 'noise' in config:
         noise = config['noise']
 
@@ -403,55 +425,67 @@ def run_sampler(config, data, output):
     fig.savefig(os.path.join(out_dir, '{}.pdf'.format('phaseplot')), adjustable='box')
 
     # plot real vs modeled samples
-    R_= 2
-    x0_ = torch.from_numpy(2*R_*ss.uniform.rvs(size=[10,2])-R_)
-    t_ = torch.linspace(0., 14., 80)
-    t_numpy = t_.clone().detach().numpy()
+    for plot_itr in range(3):
+        R_= R
+        x0_ = None
+        if ode_type == "LV":
+            x0_ = torch.from_numpy(R*ss.beta.rvs(size=[N,2], a=1, b=1.5)+ [3., 1.5])
+        else:
+            x0_ = torch.from_numpy(2*R_*ss.uniform.rvs(size=[10,2])-R_)
+            
+        t_ = torch.linspace(0., 14., 80)
+        t_numpy = t_.clone().detach().numpy()
 
-    xode_gp = []
-    for i in range(len(chain)):
-        kreg.U.data = torch.from_numpy(chain[i][0][0][0])
-        xode_gp.append(odeint(kreg, x0_, t_).detach().numpy())
-        xode_gp[-1] = np.transpose(xode_gp[-1],[1,0,2])
+        xode_gp = []
+        for i in range(len(chain)):
+            kreg.U.data = torch.from_numpy(chain[i][0][0][0])
+            xode_gp.append(odeint(kreg, x0_, t_).detach().numpy())
+            xode_gp[-1] = np.transpose(xode_gp[-1],[1,0,2])
 
-    xode_gp_mean = np.zeros_like(xode_gp[0])
-    xode_gp_std = np.zeros_like(xode_gp[0])
+        xode_gp_mean = np.zeros_like(xode_gp[0])
+        xode_gp_std = np.zeros_like(xode_gp[0])
 
-    for i in range(xode_gp_mean.shape[0]):
-        xode_gp_mean[i,:,0] = np.mean([xode_gp[j][i,:,0] for j in range(len(xode_gp))], axis=0)
-        xode_gp_mean[i,:,1] = np.mean([xode_gp[j][i,:,1] for j in range(len(xode_gp))], axis=0)
-        xode_gp_std[i,:,0] = np.std([xode_gp[j][i,:,0] for j in range(len(xode_gp))], axis=0)
-        xode_gp_std[i,:,1] = np.std([xode_gp[j][i,:,1] for j in range(len(xode_gp))], axis=0)
-        
-        
-    xode_real = odeint(VDP(), x0_, t_).detach().numpy()
-    xode_real = np.transpose(xode_real,[1,0,2])
+        for i in range(xode_gp_mean.shape[0]):
+            xode_gp_mean[i,:,0] = np.mean([xode_gp[j][i,:,0] for j in range(len(xode_gp))], axis=0)
+            xode_gp_mean[i,:,1] = np.mean([xode_gp[j][i,:,1] for j in range(len(xode_gp))], axis=0)
+            xode_gp_std[i,:,0] = np.std([xode_gp[j][i,:,0] for j in range(len(xode_gp))], axis=0)
+            xode_gp_std[i,:,1] = np.std([xode_gp[j][i,:,1] for j in range(len(xode_gp))], axis=0)
+            
+        ode_func = None
+        if ode_type == "VDP":
+            ode_func = VDP
+        if ode_type == "LV":
+            ode_func = LV
+        if ode_type == "FHN":
+            ode_func = FHN
+        xode_real = odeint(ode_func(), x0_, t_).detach().numpy()
+        xode_real = np.transpose(xode_real,[1,0,2])
 
 
-    num_plots = 3
-    # fig, ax = plt.subplots(nrows=(num_plots+1)//2, ncols=2, figsize=(15,10))
-    fig, axes = plt.subplots(ncols=num_plots, nrows=1, figsize=(15,3))
-    for i in range(num_plots):
-        axes[i].plot(t_numpy[:80],xode_real[i,0:80,0],'-',color='r', label='Position(real)')
-        axes[i].fill_between(x=t_numpy[:80],
-                            y1=xode_gp_mean[i,0:80,0]-5*xode_gp_std[i,0:80,0],
-                            y2=xode_gp_mean[i,0:80,0]+5*xode_gp_std[i,0:80,0],
-                            linestyle='--',color='k', alpha=0.3)
-        axes[i].plot(t_numpy[:80],
-                    xode_gp_mean[i,0:80,0],
-                    linestyle='-',color='k', label='Position(GP)')
-        axes[i].plot(t_numpy[:80],xode_real[i,0:80,1],'-',color='g', label='Velocity(real)')
-        axes[i].fill_between(x=t_numpy[:80],
-                            y1=xode_gp_mean[i,0:80,1]-5*xode_gp_std[i,0:80,1],
-                            y2=xode_gp_mean[i,0:80,1]+5*xode_gp_std[i,0:80,1],
-                            linestyle='--',color='gray', alpha=0.3)
-        axes[i].plot(t_numpy[:80],
-                    xode_gp_mean[i,0:80,1],
-                    linestyle='-',color='gray', label='Velocity(GP)')
+        num_plots = 3
+        # fig, ax = plt.subplots(nrows=(num_plots+1)//2, ncols=2, figsize=(15,10))
+        fig, axes = plt.subplots(ncols=num_plots, nrows=1, figsize=(15,3))
+        for i in range(num_plots):
+            axes[i].plot(t_numpy[:80],xode_real[i,0:80,0],'-',color='r', label='Position(real)')
+            axes[i].fill_between(x=t_numpy[:80],
+                                y1=xode_gp_mean[i,0:80,0]-5*xode_gp_std[i,0:80,0],
+                                y2=xode_gp_mean[i,0:80,0]+5*xode_gp_std[i,0:80,0],
+                                linestyle='--',color='k', alpha=0.3)
+            axes[i].plot(t_numpy[:80],
+                        xode_gp_mean[i,0:80,0],
+                        linestyle='-',color='k', label='Position(GP)')
+            axes[i].plot(t_numpy[:80],xode_real[i,0:80,1],'-',color='g', label='Velocity(real)')
+            axes[i].fill_between(x=t_numpy[:80],
+                                y1=xode_gp_mean[i,0:80,1]-5*xode_gp_std[i,0:80,1],
+                                y2=xode_gp_mean[i,0:80,1]+5*xode_gp_std[i,0:80,1],
+                                linestyle='--',color='gray', alpha=0.3)
+            axes[i].plot(t_numpy[:80],
+                        xode_gp_mean[i,0:80,1],
+                        linestyle='-',color='gray', label='Velocity(GP)')
 
-        axes[i].legend()
+            axes[i].legend()
 
-    fig.savefig(os.path.join(out_dir, '{}.pdf'.format('sample_trajectories')), adjustable='box')
+        fig.savefig(os.path.join(out_dir, '{}-{}.pdf'.format('sample_trajectories', plot_itr+1)), adjustable='box')
 
     # plot logsn
     fig, ax = plt.subplots()
@@ -468,11 +502,12 @@ def worker(config, data, output):
         else:
             data_[d] = data[d]
     # try:
+    output_ = os.path.join(output, data['ODE'])
     if config['inf_type'] == 'optim':
-        output_ = os.path.join(output, 'optim')
+        output_ = os.path.join(output_, 'optim')
         run_optim(config, data_, output_)
     else:
-        output_ = os.path.join(output, 'samplers')
+        output_ = os.path.join(output_, 'samplers')
         run_sampler(config, data_, output_)
     # except Exception as e:
     #     print("Encountered error while inferring with {}:\n{}".format(config['method'], e))
@@ -496,11 +531,7 @@ if __name__=='__main__':
     os.makedirs(hyp['output'], exist_ok=True)
     output = hyp['output']
 
-    data = None
-    if 'pickle_file' not in hyp['data']:
-        data = get_VDP_data(hyp['data'])
-    else:
-        data = pickle.load(open(hyp['data']['pickle_file'], 'rb'))
+    data = pickle.load(open(hyp['data']['pickle_file'], 'rb'))
     
     sns.set(context="notebook",
             style="whitegrid",
