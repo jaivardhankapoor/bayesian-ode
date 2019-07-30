@@ -18,7 +18,7 @@ import matplotlib.ticker as ticker
 import seaborn as sns
 
 
-from optim import LBFGS
+from optims.LBFGS import FullBatchLBFGS
 from samplers.langevin import MALA, SGLD, pSGLD
 from samplers.hamiltonian import aSGHMC
 
@@ -112,7 +112,7 @@ def run_optim(config, data, output):
     if config['method'] == 'Adam':
         optim = torch.optim.Adam(params, lr=config['lr'])
     if 'LBFGS' in config['method']:
-        optim = LBFGS(params, lr=config['lr'], line_search=config['line_search'],
+        optim = FullBatchLBFGS(params, lr=config['lr'], line_search=config['line_search'],
                       history_size=config['history_size'])
     if 'SGD' in config['method']:
         optim = torch.optim.SGD(params, lr=config['lr'])
@@ -173,7 +173,7 @@ def run_optim(config, data, output):
         loss = closure()
         loss.backward()
         if config['method']=='LBFGS':
-            optim.step(closure)
+            optim.step(options={'closure': closure})
         else:
             optim.step()
 
