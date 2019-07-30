@@ -110,7 +110,7 @@ def run_optim(config, data, output):
     optim = None
     if config['method'] == 'Adam':
         optim = torch.optim.Adam(params, lr=config['lr'])
-    if config['method'] == 'LBFGS':
+    if 'LBFGS' in config['method']:
         optim = torch.optim.LBFGS(params, lr=config['lr'])
     if 'SGD' in config['method']:
         optim = torch.optim.SGD(params, lr=config['lr'])
@@ -197,7 +197,7 @@ def run_optim(config, data, output):
     ax.plot(sq_err_loss_arr)
     ax.set_xlabel('Iteration')
     ax.set_ylabel('sum of squares error')
-    fig.savefig(os.path.join(out_dir, '{}_final.pdf'.format('loss', str(sq_err_loss_arr[-1]))), adjustable='box')
+    fig.savefig(os.path.join(out_dir, '{}_final{}.pdf'.format('loss', str(sq_err_loss_arr[-1]))), adjustable='box')
     
     # log losses
     fig, ax = plt.subplots()
@@ -359,7 +359,7 @@ def run_sampler(config, data, output):
     ax.plot(sq_err_loss_arr)
     ax.set_xlabel('Iteration')
     ax.set_ylabel('sum of squares error')
-    fig.savefig(os.path.join(out_dir, '{}_best.pdf'.format('loss', str(np.min(sq_err_loss_arr)))), adjustable='box')
+    fig.savefig(os.path.join(out_dir, '{}_best{}.pdf'.format('loss', str(np.min(sq_err_loss_arr)))), adjustable='box')
     
     # log losses
     fig, ax = plt.subplots()

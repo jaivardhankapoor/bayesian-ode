@@ -36,7 +36,7 @@ SENSIBLE_PARAMS = {
     "ell": "ell",
     # "burn_in": "burn",
     # "num_samples":"nsampl",
-    # "num_iters":"nitr",
+    "num_iters":"nitr",
     "lr": "lr",
     "lr_decay": "lrdec",
     "mom": "mom",
@@ -63,7 +63,7 @@ json_iter = 1
 
 # Adam
 id_=1
-LR = [1e-3,5e-3,1e-2]
+LR = [5e-3,1e-2, 5e-3,1e-2, 5e-3,1e-2]
 # M = [4,5,6]
 # ELL = [0.5, 0.75, 1, 1.25]
 NUM_ITERS = 1000
@@ -100,10 +100,11 @@ for lr, m, ell in itertools.product(LR, M, ELL):
 
 # LBFGS
 id_=1
-LR = [3e-5, 1e-4, 3e-4, 1e-3]
+LR = [1e-4, 3e-4, 1e-3, 3e-3]
 # M = [4,5,6]
 # ELL = [0.5, 0.75, 1, 1.25]
 NUM_ITERS = 1000
+LR_DECAY = 0.1
 # LR = [1e-3]
 M = [6]
 ELL = [0.75]
@@ -122,6 +123,7 @@ for lr, m, ell in itertools.product(LR, M, ELL):
         "lr": lr,
         "num_iters": NUM_ITERS,
         "id": id_,
+        "lr_decay": LR_DECAY,
     })
     dir_name = ''
     for k in SENSIBLE_PARAMS:
@@ -135,42 +137,42 @@ for lr, m, ell in itertools.product(LR, M, ELL):
 
     json_iter += 1
 
-# SGD
-id_=1
-LR = [1e-4, 3e-4, 1e-3, 3e-3, 1e-2]
-# M = [4,5,6]
-# ELL = [0.5, 0.75, 1, 1.25]
-NUM_ITERS = 2000
-# LR = [1e-4]
-M = [6]
-ELL = [0.75]
+# # SGD
+# id_=1
+# LR = [1e-4, 3e-4, 1e-3, 3e-3, 1e-2]
+# # M = [4,5,6]
+# # ELL = [0.5, 0.75, 1, 1.25]
+# NUM_ITERS = 2000
+# # LR = [1e-4]
+# M = [6]
+# ELL = [0.75]
 
-for lr, m, ell in itertools.product(LR, M, ELL):
-    config = {}
-    config["output"] = OUT_PATH
-    config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
-    config["configs"] = []
-    config["configs"].append({
-        "inf_type": "optim",
-        "method": "SGD",
-        "M": m,
-        "sf": DEFAULT_VALUES["sf"],
-        "ell": ell,
-        "lr": lr,
-        "num_iters": NUM_ITERS,
-        "id": id_,
-    })
-    dir_name = ''
-    for k in SENSIBLE_PARAMS:
-        if k in config["configs"][0]:
-            dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
-    config["configs"][0]["dir_name"] = dir_name
-    id_ += 1
+# for lr, m, ell in itertools.product(LR, M, ELL):
+#     config = {}
+#     config["output"] = OUT_PATH
+#     config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
+#     config["configs"] = []
+#     config["configs"].append({
+#         "inf_type": "optim",
+#         "method": "SGD",
+#         "M": m,
+#         "sf": DEFAULT_VALUES["sf"],
+#         "ell": ell,
+#         "lr": lr,
+#         "num_iters": NUM_ITERS,
+#         "id": id_,
+#     })
+#     dir_name = ''
+#     for k in SENSIBLE_PARAMS:
+#         if k in config["configs"][0]:
+#             dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
+#     config["configs"][0]["dir_name"] = dir_name
+#     id_ += 1
 
-    with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
-        json.dump(config, f)
+#     with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
+#         json.dump(config, f)
 
-    json_iter += 1
+#     json_iter += 1
 
 
 # SGD+mom
@@ -180,10 +182,11 @@ LR = [3e-5, 1e-4, 3e-4]
 # ELL = [0.5, 0.75, 1, 1.25]
 # MOM = [0.9,0.95,0.98,0.99]
 NUM_ITERS = 1500
+LR_DECAY = 0.0
 # LR = [1e-3]
 M = [6]
 ELL = [0.75]
-MOM = [0.99]
+MOM = [0.96, 0.99]
 
 for lr, m, ell, mom in itertools.product(LR, M, ELL, MOM):
     config = {}
@@ -199,7 +202,7 @@ for lr, m, ell, mom in itertools.product(LR, M, ELL, MOM):
         "lr": lr,
         "num_iters": NUM_ITERS,
         "id": id_,
-        "lr_decay": DEFAULT_VALUES["lr_decay"],
+        "lr_decay": LR_DECAY,
         "mom": mom,
     })
     dir_name = ''
@@ -222,10 +225,11 @@ LR = [3e-5, 1e-4, 3e-4]
 # ELL = [0.5, 0.75, 1, 1.25]
 # MOM = [0.9,0.95,0.98,0.99]
 NUM_ITERS = 1500
+LR_DECAY = 0.0
 # LR = [1e-3]
 M = [6]
 ELL = [0.75]
-MOM = [0.99]
+MOM = [0.96, 0.99]
 
 for lr, m, ell, mom in itertools.product(LR, M, ELL, MOM):
     config = {}
@@ -241,7 +245,7 @@ for lr, m, ell, mom in itertools.product(LR, M, ELL, MOM):
         "lr": lr,
         "num_iters": NUM_ITERS,
         "id": id_,
-        "lr_decay": DEFAULT_VALUES["lr_decay"],
+        "lr_decay": LR_DECAY,
         "mom": mom,
     })
     dir_name = ''
@@ -258,17 +262,17 @@ for lr, m, ell, mom in itertools.product(LR, M, ELL, MOM):
 
 # RMSprop
 id_ = 1
-LR = [1e-4, 3e-4, 1e-3]
+LR = [5e-4, 1e-3, 5e-4, 1e-3]
 # M = [4,5,6]
 # ELL = [0.5, 0.75, 1, 1.25]
-LR_DECAY = [0, 0.02]
+LR_DECAY = [0]
 # ALPHA = [0.95, 0.98, 0.99]
 NUM_ITERS = 1500
 # LR = [1e-3]
 M = [6]
 ELL = [0.75]
 # LR_DECAY = [0.02]
-ALPHA = [0.99]
+ALPHA = [0.96, 0.99]
 for lr, m, ell, lrdec, alpha in itertools.product(LR, M, ELL, LR_DECAY, ALPHA):
     config = {}
     config["output"] = OUT_PATH
@@ -298,50 +302,50 @@ for lr, m, ell, lrdec, alpha in itertools.product(LR, M, ELL, LR_DECAY, ALPHA):
 
     json_iter += 1
 
-# RMSprop+mom
-id_ = 1
-LR = [3e-4, 1e-4, 3e-4, 1e-3, 3e-3, ]
-# M = [4,5,6]
-# ELL = [0.5, 0.75, 1, 1.25]
-LR_DECAY = [0.01, 0.03]
-ALPHA = [0.96, 0.99]
-# MOM = [0.9, 0.95, 0.99]
-NUM_ITERS = 1000
-# LR = [1e-3]
-M = [6]
-ELL = [0.75]
-# LR_DECAY = [0.02]
-# ALPHA = [0.99]
-MOM = [0.98]
-for lr, m, ell, lrdec, alpha, mom in itertools.product(LR, M, ELL, LR_DECAY, ALPHA, MOM):
-    config = {}
-    config["output"] = OUT_PATH
-    config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
-    config["configs"] = []
-    config["configs"].append({
-        "inf_type": "optim",
-        "method": "RMSprop+mom",
-        "M": m,
-        "sf": DEFAULT_VALUES["sf"],
-        "ell": ell,
-        "lr": lr,
-        "num_iters": NUM_ITERS,
-        "id": id_,
-        "lr_decay": lrdec,
-        "rmsprop_alpha": alpha,
-        "mom": mom,
-    })
-    dir_name = ''
-    for k in SENSIBLE_PARAMS:
-        if k in config["configs"][0]:
-            dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
-    config["configs"][0]["dir_name"] = dir_name
-    id_ += 1
+# # RMSprop+mom
+# id_ = 1
+# LR = [3e-4, 1e-4, 3e-4, 1e-3, 3e-3, ]
+# # M = [4,5,6]
+# # ELL = [0.5, 0.75, 1, 1.25]
+# LR_DECAY = [0.01, 0.03]
+# ALPHA = [0.96, 0.99]
+# # MOM = [0.9, 0.95, 0.99]
+# NUM_ITERS = 1000
+# # LR = [1e-3]
+# M = [6]
+# ELL = [0.75]
+# # LR_DECAY = [0.02]
+# # ALPHA = [0.99]
+# MOM = [0.98]
+# for lr, m, ell, lrdec, alpha, mom in itertools.product(LR, M, ELL, LR_DECAY, ALPHA, MOM):
+#     config = {}
+#     config["output"] = OUT_PATH
+#     config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
+#     config["configs"] = []
+#     config["configs"].append({
+#         "inf_type": "optim",
+#         "method": "RMSprop+mom",
+#         "M": m,
+#         "sf": DEFAULT_VALUES["sf"],
+#         "ell": ell,
+#         "lr": lr,
+#         "num_iters": NUM_ITERS,
+#         "id": id_,
+#         "lr_decay": lrdec,
+#         "rmsprop_alpha": alpha,
+#         "mom": mom,
+#     })
+#     dir_name = ''
+#     for k in SENSIBLE_PARAMS:
+#         if k in config["configs"][0]:
+#             dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
+#     config["configs"][0]["dir_name"] = dir_name
+#     id_ += 1
 
-    with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
-        json.dump(config, f)
+#     with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
+#         json.dump(config, f)
 
-    json_iter += 1
+#     json_iter += 1
 
 
 # Adadelta
@@ -350,12 +354,13 @@ LR = [5e-5, 1e-4, 3e-4, 1e-3]
 # M = [4,5,6]
 # ELL = [0.5, 0.75, 1, 1.25]
 # LR_DECAY = [0.0, 0.03, 0.1]
-NUM_ITERS = 1000
+NUM_ITERS = [1000, 2000]
 # LR = [1e-3]
 M = [6]
 ELL = [0.75]
-LR_DECAY = [0.02]
-for lr, m, ell, lrdec in itertools.product(LR, M, ELL, LR_DECAY):
+RHO = [0.9, 0.95, 0.99]
+LR_DECAY = [0.00]
+for lr, m, ell, lrdec, rho, niters in itertools.product(LR, M, ELL, LR_DECAY, RHO, NUM_ITERS):
     config = {}
     config["output"] = OUT_PATH
     config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
@@ -367,10 +372,10 @@ for lr, m, ell, lrdec in itertools.product(LR, M, ELL, LR_DECAY):
         "sf": DEFAULT_VALUES["sf"],
         "ell": ell,
         "lr": lr,
-        "num_iters": NUM_ITERS,
+        "num_iters": niters,
         "id": id_,
         "lr_decay": lrdec,
-        "adadelta_rho": DEFAULT_VALUES["adadelta_rho"],
+        "adadelta_rho": rho,
     })
     dir_name = ''
     for k in SENSIBLE_PARAMS:
@@ -387,107 +392,107 @@ for lr, m, ell, lrdec in itertools.product(LR, M, ELL, LR_DECAY):
 
 ## Write configs for samplers
 
-# MALA
-id_=1
-LR = [2e-5, 5e-5, 1e-4, 3e-4]
-# M = [4,5,6]
-# ELL = [0.5, 0.75, 1, 1.25]
-# NOISE = [0.03, 0.1, 0.3, 1.0]
-BURN_IN = DEFAULT_VALUES["burn_in"]//1
-NUM_SAMPLES = DEFAULT_VALUES["num_samples"]//1
-# LR = [1e-4]
-M = [6]
-ELL = [0.75]
-NOISE = [0.1]
+# # MALA
+# id_=1
+# LR = [2e-5, 5e-5, 1e-4, 3e-4]
+# # M = [4,5,6]
+# # ELL = [0.5, 0.75, 1, 1.25]
+# # NOISE = [0.03, 0.1, 0.3, 1.0]
+# BURN_IN = DEFAULT_VALUES["burn_in"]//1
+# NUM_SAMPLES = DEFAULT_VALUES["num_samples"]//1
+# # LR = [1e-4]
+# M = [6]
+# ELL = [0.75]
+# NOISE = [0.1]
 
-for lr, m, ell, noise in itertools.product(LR, M, ELL, NOISE):
-    config = {}
-    config["output"] = OUT_PATH
-    config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
-    config["configs"] = []
-    config["configs"].append({
-        "inf_type": "samplers",
-        "method": "MALA",
-        "burn_in": BURN_IN,
-        "num_samples": NUM_SAMPLES,
-        "chain_start": DEFAULT_VALUES['chain_start'],
-        "thinning": DEFAULT_VALUES['thinning'],
-        "M": m,
-        "sf": DEFAULT_VALUES["sf"],
-        "noise": noise,
-        "ell": ell,
-        "lr": lr,
-        "id": id_,
-    })
-    dir_name = ''
-    for k in SENSIBLE_PARAMS:
-        if k in config["configs"][0]:
-            dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
-    config["configs"][0]["dir_name"] = dir_name
-    id_ += 1
+# for lr, m, ell, noise in itertools.product(LR, M, ELL, NOISE):
+#     config = {}
+#     config["output"] = OUT_PATH
+#     config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
+#     config["configs"] = []
+#     config["configs"].append({
+#         "inf_type": "samplers",
+#         "method": "MALA",
+#         "burn_in": BURN_IN,
+#         "num_samples": NUM_SAMPLES,
+#         "chain_start": DEFAULT_VALUES['chain_start'],
+#         "thinning": DEFAULT_VALUES['thinning'],
+#         "M": m,
+#         "sf": DEFAULT_VALUES["sf"],
+#         "noise": noise,
+#         "ell": ell,
+#         "lr": lr,
+#         "id": id_,
+#     })
+#     dir_name = ''
+#     for k in SENSIBLE_PARAMS:
+#         if k in config["configs"][0]:
+#             dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
+#     config["configs"][0]["dir_name"] = dir_name
+#     id_ += 1
 
-    with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
-        json.dump(config, f)
+#     with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
+#         json.dump(config, f)
 
-    json_iter += 1
+#     json_iter += 1
 
 
-# SGLD
-id_=1
-LR0 = [3e-5, 1e-4, 3e-4, 1e-3]
-# M = [4,5,6]
-# ELL = [0.5, 0.75, 1, 1.25]
-# NOISE = [0.03, 0.1, 0.3, 1.0]
-LR_ALPHA = [0.03, 0.1]
-BURN_IN = DEFAULT_VALUES["burn_in"]//1 + 1000
-NUM_SAMPLES = DEFAULT_VALUES["num_samples"]//1 - 1000
-# LR0 = [1e-3]
-M = [6]
-ELL = [0.75]
-NOISE = [0.1]
-# LR_ALPHA = [0.1]
-for lr0, m, ell, noise, lr_alpha in itertools.product(LR, M, ELL, NOISE, LR_ALPHA):
-    config = {}
-    config["output"] = OUT_PATH
-    config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
-    config["configs"] = []
-    config["configs"].append({
-        "inf_type": "samplers",
-        "method": "SGLD",
-        "burn_in": BURN_IN,
-        "num_samples": NUM_SAMPLES,
-        "chain_start": DEFAULT_VALUES['chain_start'],
-        "thinning": DEFAULT_VALUES['thinning'],
-        "M": m,
-        "sf": DEFAULT_VALUES["sf"],
-        "noise": noise,
-        "ell": ell,
-        "lr0": lr0,
-        "lr_gamma": DEFAULT_VALUES["lr_gamma"],
-        "lr_t0": DEFAULT_VALUES["lr_t0"],
-        "lr_alpha": lr_alpha,
-        "id": id_,
-    })
-    dir_name = ''
-    for k in SENSIBLE_PARAMS:
-        if k in config["configs"][0]:
-            dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
-    config["configs"][0]["dir_name"] = dir_name
-    id_ += 1
+# # SGLD
+# id_=1
+# LR0 = [3e-5, 1e-4, 3e-4, 1e-3]
+# # M = [4,5,6]
+# # ELL = [0.5, 0.75, 1, 1.25]
+# # NOISE = [0.03, 0.1, 0.3, 1.0]
+# LR_ALPHA = [0.03, 0.1]
+# BURN_IN = DEFAULT_VALUES["burn_in"]//1 + 1000
+# NUM_SAMPLES = DEFAULT_VALUES["num_samples"]//1 - 1000
+# # LR0 = [1e-3]
+# M = [6]
+# ELL = [0.75]
+# NOISE = [0.1]
+# # LR_ALPHA = [0.1]
+# for lr0, m, ell, noise, lr_alpha in itertools.product(LR, M, ELL, NOISE, LR_ALPHA):
+#     config = {}
+#     config["output"] = OUT_PATH
+#     config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
+#     config["configs"] = []
+#     config["configs"].append({
+#         "inf_type": "samplers",
+#         "method": "SGLD",
+#         "burn_in": BURN_IN,
+#         "num_samples": NUM_SAMPLES,
+#         "chain_start": DEFAULT_VALUES['chain_start'],
+#         "thinning": DEFAULT_VALUES['thinning'],
+#         "M": m,
+#         "sf": DEFAULT_VALUES["sf"],
+#         "noise": noise,
+#         "ell": ell,
+#         "lr0": lr0,
+#         "lr_gamma": DEFAULT_VALUES["lr_gamma"],
+#         "lr_t0": DEFAULT_VALUES["lr_t0"],
+#         "lr_alpha": lr_alpha,
+#         "id": id_,
+#     })
+#     dir_name = ''
+#     for k in SENSIBLE_PARAMS:
+#         if k in config["configs"][0]:
+#             dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
+#     config["configs"][0]["dir_name"] = dir_name
+#     id_ += 1
 
-    with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
-        json.dump(config, f)
+#     with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
+#         json.dump(config, f)
 
-    json_iter += 1
+#     json_iter += 1
 
 
 # pSGLD
 id_=1
-LR0 = [5e-5, 1e-4, 3e-4, 1e-3, 3e-3]
+LR0 = [1e-4, 3e-4, 1e-3, 3e-3]
 # M = [4,5,6]
 # ELL = [0.5, 0.75, 1, 1.25]
 # NOISE = [0.03, 0.1, 0.3, 1.0]
-LR_ALPHA = [0.03, 0.1]
+LR_ALPHA = [0.0001, 0.001]
 ALPHA = [0.96, 0.99]
 BURN_IN = DEFAULT_VALUES["burn_in"]//1 + 1000
 NUM_SAMPLES = DEFAULT_VALUES["num_samples"]//1 - 1000
@@ -537,7 +542,7 @@ for lr0, m, ell, noise, lr_alpha, alpha in itertools.product(LR, M, ELL, NOISE, 
 
 # aSGHMC
 id_=1
-LR = [1e-4, 3e-4, 1e-3, 3e-3, 1e-2]
+LR = [3e-3, 1e-2, 3e-3, 1e-2, 3e-3, 1e-2, 3e-3, 1e-2, ]
 # M = [4,5,6]
 # ELL = [0.5, 0.75, 1, 1.25]
 # NOISE = [0.03, 0.1, 0.3, 1.0]
