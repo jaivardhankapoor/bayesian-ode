@@ -5,8 +5,6 @@ import numpy
 import datetime
 import json
 
-CLUSTER_SCRIPT_FILENAME = 'quantitative' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-
 
 DEFAULT_VALUES = {
     "M": 6,
@@ -53,7 +51,7 @@ SENSIBLE_PARAMS = {
 }
 
 
-OUT_PATH = 'exp/gp'
+OUT_PATH = 'exp/gp_new'
 DATA_DIR = 'data/'
 DATA_FILES = ['VDP.pickle', 'LV.pickle', 'FHN.pickle']
 
@@ -77,7 +75,7 @@ for DATA_FILE in DATA_FILES:
 
     # Adam
     id_=1
-    LR = [5e-3, 1e-2]
+    LR = [1e-2, 3e-2]
 
     for lr, m, ell in itertools.product(LR, M, ELL):
         config = {}
@@ -106,83 +104,83 @@ for DATA_FILE in DATA_FILES:
 
         json_iter += 1
 
-    # LBFGS
-    id_=1
-    LR = [3e-4, 1e-3, 3e-3, 1e-2]
-    LR_DECAY = 0.03
-    NUM_ITERS = 500
-    LINE_SEARCH = ["None", "Armijo"]
-    HISTORY_SIZE = [3, 5, 10]
+    # # LBFGS
+    # id_=1
+    # LR = [3e-4, 1e-3, 3e-3, 1e-2]
+    # LR_DECAY = 0.03
+    # NUM_ITERS = 500
+    # LINE_SEARCH = ["None", "Armijo"]
+    # HISTORY_SIZE = [3, 5, 10]
 
-    for lr, m, ell, ls, hist in itertools.product(LR, M, ELL, LINE_SEARCH, HISTORY_SIZE):
-        config = {}
-        config["output"] = OUT_PATH
-        config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
-        config["configs"] = []
-        config["configs"].append({
-            "inf_type": "optim",
-            "method": "LBFGS",
-            "M": m,
-            "sf": DEFAULT_VALUES["sf"],
-            "ell": ell,
-            "lr": lr,
-            "num_iters": NUM_ITERS,
-            "id": id_,
-            "lr_decay": LR_DECAY,
-            "history_size": hist,
-            "line_search": ls,
-        })
-        dir_name = ''
-        for k in SENSIBLE_PARAMS:
-            if k in config["configs"][0]:
-                dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
-        config["configs"][0]["dir_name"] = dir_name
-        id_ += 1
+    # for lr, m, ell, ls, hist in itertools.product(LR, M, ELL, LINE_SEARCH, HISTORY_SIZE):
+    #     config = {}
+    #     config["output"] = OUT_PATH
+    #     config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
+    #     config["configs"] = []
+    #     config["configs"].append({
+    #         "inf_type": "optim",
+    #         "method": "LBFGS",
+    #         "M": m,
+    #         "sf": DEFAULT_VALUES["sf"],
+    #         "ell": ell,
+    #         "lr": lr,
+    #         "num_iters": NUM_ITERS,
+    #         "id": id_,
+    #         "lr_decay": LR_DECAY,
+    #         "history_size": hist,
+    #         "line_search": ls,
+    #     })
+    #     dir_name = ''
+    #     for k in SENSIBLE_PARAMS:
+    #         if k in config["configs"][0]:
+    #             dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
+    #     config["configs"][0]["dir_name"] = dir_name
+    #     id_ += 1
 
-        with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
-            json.dump(config, f)
+    #     with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
+    #         json.dump(config, f)
 
-        json_iter += 1
+    #     json_iter += 1
 
-    # SGD
-    id_=1
-    LR = [3e-3, 1e-2]
-    CLIP = [1, 5, 10]
+    # # SGD
+    # id_=1
+    # LR = [3e-3, 1e-2]
+    # CLIP = [1, 5, 10]
 
-    for lr, m, ell, clip in itertools.product(LR, M, ELL, CLIP):
-        config = {}
-        config["output"] = OUT_PATH
-        config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
-        config["configs"] = []
-        config["configs"].append({
-            "inf_type": "optim",
-            "method": "SGD",
-            "M": m,
-            "sf": DEFAULT_VALUES["sf"],
-            "ell": ell,
-            "lr": lr,
-            "num_iters": NUM_ITERS,
-            "id": id_,
-            "clip": clip,
-        })
-        dir_name = ''
-        for k in SENSIBLE_PARAMS:
-            if k in config["configs"][0]:
-                dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
-        config["configs"][0]["dir_name"] = dir_name
-        id_ += 1
+    # for lr, m, ell, clip in itertools.product(LR, M, ELL, CLIP):
+    #     config = {}
+    #     config["output"] = OUT_PATH
+    #     config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
+    #     config["configs"] = []
+    #     config["configs"].append({
+    #         "inf_type": "optim",
+    #         "method": "SGD",
+    #         "M": m,
+    #         "sf": DEFAULT_VALUES["sf"],
+    #         "ell": ell,
+    #         "lr": lr,
+    #         "num_iters": NUM_ITERS,
+    #         "id": id_,
+    #         "clip": clip,
+    #     })
+    #     dir_name = ''
+    #     for k in SENSIBLE_PARAMS:
+    #         if k in config["configs"][0]:
+    #             dir_name += SENSIBLE_PARAMS[k] + str(config["configs"][0][k]) + "_"
+    #     config["configs"][0]["dir_name"] = dir_name
+    #     id_ += 1
 
-        with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
-            json.dump(config, f)
+    #     with open(os.path.join(JSON_DIR, str(json_iter)+'.json'), 'w') as f:
+    #         json.dump(config, f)
 
-        json_iter += 1
+    #     json_iter += 1
 
 
     # SGD+mom
     id_=1
-    LR = [1e-4, 1e-3, 1e-2]
-    MOM = [0.99]
-    CLIP = [1, 5, 10]
+    LR = [1e-4, 1e-3]
+    MOM = [0.9, 0.99]
+    CLIP = [1]
     LR_DECAY = 0.0
 
     for lr, m, ell, mom, clip in itertools.product(LR, M, ELL, MOM, CLIP):
@@ -218,9 +216,9 @@ for DATA_FILE in DATA_FILES:
 
     # SGD+mom+nag
     id_=1
-    LR = [1e-4, 1e-3, 1e-2]
-    MOM = [0.99]
-    CLIP = [1, 5, 10]
+    LR = [1e-4, 1e-3]
+    MOM = [0.9, 0.99]
+    CLIP = [1]
     LR_DECAY = 0.0
 
     for lr, m, ell, mom, clip in itertools.product(LR, M, ELL, MOM, CLIP):
@@ -255,9 +253,9 @@ for DATA_FILE in DATA_FILES:
 
     # RMSprop
     id_ = 1
-    LR = [1e-3, 3e-2]
+    LR = [1e-2, 3e-2]
     LR_DECAY = [0]
-    ALPHA = [0.96]
+    ALPHA = [0.9, 0.95, 0.99]
     for lr, m, ell, lrdec, alpha in itertools.product(LR, M, ELL, LR_DECAY, ALPHA):
         config = {}
         config["output"] = OUT_PATH
@@ -289,7 +287,7 @@ for DATA_FILE in DATA_FILES:
 
     # RMSprop+mom
     id_ = 1
-    LR = [1e-3, 3e-3, 1e-2]
+    LR = [1e-2]
     LR_DECAY = [0.01]
     ALPHA = [0.96]
     MOM = [0.98]
@@ -326,8 +324,8 @@ for DATA_FILE in DATA_FILES:
 
     # Adadelta
     id_ = 1
-    LR = [1e-3, 3e-3, 1e-2]
-    RHO = [0.95, 0.99]
+    LR = [1e-2, 3e-2, 1e-1]
+    RHO = [0.95]
     LR_DECAY = [0.00]
     for lr, m, ell, lrdec, rho in itertools.product(LR, M, ELL, LR_DECAY, RHO):
         config = {}
@@ -363,7 +361,7 @@ for DATA_FILE in DATA_FILES:
 
     # MALA
     id_=1
-    LR = [2e-5, 5e-5, 1e-4]
+    LR = [5e-5]
 
     for lr, m, ell, noise in itertools.product(LR, M, ELL, NOISE):
         config = {}
@@ -399,10 +397,10 @@ for DATA_FILE in DATA_FILES:
 
     # SGLD
     id_=1
-    LR0 = [3e-4, 1e-3, 3e-3]
+    LR0 = [1e-4, 3e-4, 1e-3, 3e-3]
     LR_ALPHA = [0.03]
 
-    for lr0, m, ell, noise, lr_alpha in itertools.product(LR, M, ELL, NOISE, LR_ALPHA):
+    for lr0, m, ell, noise, lr_alpha in itertools.product(LR0, M, ELL, NOISE, LR_ALPHA):
         config = {}
         config["output"] = OUT_PATH
         config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
@@ -439,11 +437,11 @@ for DATA_FILE in DATA_FILES:
 
     # pSGLD
     id_=1
-    LR0 = [1e-3, 3e-3, 1e-2]
+    LR0 = [3e-4, 1e-3, 3e-3, 1e-2]
     LR_ALPHA = [0.003, 0.01]
     ALPHA = [0.99]
 
-    for lr0, m, ell, noise, lr_alpha, alpha in itertools.product(LR, M, ELL, NOISE, LR_ALPHA, ALPHA):
+    for lr0, m, ell, noise, lr_alpha, alpha in itertools.product(LR0, M, ELL, NOISE, LR_ALPHA, ALPHA):
         config = {}
         config["output"] = OUT_PATH
         config["data"] = {"pickle_file": DATA_DIR+DATA_FILE}
@@ -482,7 +480,7 @@ for DATA_FILE in DATA_FILES:
 
     # aSGHMC
     id_=1
-    LR = [5e-3, 1e-2, 2e-2]
+    LR = [2e-2, 3e-2, 5e-2]
 
     for lr, m, ell, noise in itertools.product(LR, M, ELL, NOISE):
         config = {}

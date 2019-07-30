@@ -197,6 +197,12 @@ def run_optim(config, data, output):
                 total_loss_arr.append(loss.item())
                 sq_err_loss_arr.append(sq_err_loss.item())
 
+    # Save losses
+    with open(os.path.join(out_dir, 'total_loss_arr.pickle'), 'wb') as f:
+        pickle.dump(total_loss_arr, f)
+    with open(os.path.join(out_dir, 'sq_err_loss_arr.pickle'), 'wb') as f:
+        pickle.dump(sq_err_loss_arr, f)
+
     ## Plot results
 
     # Plot losses
@@ -374,6 +380,13 @@ def run_sampler(config, data, output):
 
     chain_ = chain[config['chain_start']::config['thinning']]
 
+    # Save losses
+    with open(os.path.join(out_dir, 'total_loss_arr.pickle'), 'wb') as f:
+        pickle.dump(total_loss_arr, f)
+    with open(os.path.join(out_dir, 'sq_err_loss_arr.pickle'), 'wb') as f:
+        pickle.dump(sq_err_loss_arr, f)
+    
+
     # Plot losses
     fig, ax = plt.subplots()
     ax.plot(total_loss_arr)
@@ -403,9 +416,9 @@ def run_sampler(config, data, output):
     fig.savefig(os.path.join(out_dir, '{}.pdf'.format('loss')), adjustable='box')
     
     # plot phase plot
-    chain_mode_idx = np.where(total_loss_arr[config['burn_in']:] == np.amin(total_loss_arr[config['burn_in']:]))
-    chain_mode = chain[chain_mode_idx[0][-1]]
-    U_mode = np.mean([i[0][0][0] for i in chain if i[1]], axis=0)
+    chain_mode_post_idx = np.where(total_loss_arr[config['burn_in']:] == np.amin(total_loss_arr[config['burn_in']:]))
+    chain_mode = chain[chain_mode_post_idx[0][-1]]
+    U_mode = chain_mode[0][0][0]
 
     kreg.U.data = torch.from_numpy(U_mode)
     xode = odeint(kreg, x0, t).detach().numpy()
