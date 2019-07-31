@@ -611,6 +611,11 @@ class pSGLD(Sampler):
         return updates, sumloglik
     ######### Deprecated ###############################
 
+
+
+
+################## DEBUG!!! #############################################
+
 class HAMCMC(Sampler):
     '''
     For reference, see https://arxiv.org/pdf/1602.03442.pdf
@@ -1589,3 +1594,124 @@ class aSGLD(Sampler):
             logp_array.append(-self.loss.item())
         
         return chain, logp_array
+
+##########################################################################
+
+class cSGLD(Sampler):
+
+    """
+    For reference, look at
+    https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf
+
+    Requires the following parameters during initialization:
+    1. parameters for optimization
+    2. learning rate params: lr0, gamma, t0, alpha
+    learning rate for each step is given by lr0*(t0+alpha*t)^(-gamma)
+    """
+
+    def __init__(self, params, **kwargs):
+        defaults = kwargs
+
+        if 'add_noise' not in defaults:
+            defaults['add_noise'] = True
+        if 'lr0' not in defaults:
+            defaults['lr0'] = 0.01
+        if 'M' not in defaults:
+            defaults['M'] = 5
+        if 'beta' not in defaults:
+            defaults['beta'] =  0.25
+
+        super().__init__(params, defaults)
+        
+        self.logp = None
+
+
+    def step(self, iter_num, lr=None):
+        """
+        Proposal step
+        """
+
+        for group in self.param_groups:
+            if lr:
+                group['lr'] = lr
+            for p in group['params']:
+                if p.grad is None:
+                    continue # assuming only Parameter objects are posterior vars
+                if torch.isnan(p.data).sum() or torch.isnan(p.data).sum():
+                    raise ValueError("Encountered NaN/Inf in parameter")
+                self.state[p]['data'] = p.data
+                self.state[p]['grad'] = p.grad.data
+                d_p = p.grad.data
+                # print("Gradient: {}".format(p.grad.data))
+                size = d_p.size()
+                if np.isnan(p.data).any():
+                    exit()
+                r = self._r(iter_num)
+                if r > group['beta']:
+                    # if group['add_noise']: 
+                    langevin_noise = Normal(
+                        torch.zeros(size),
+                        torch.ones(size) / np.sqrt(0.5*group['lr'])
+                    )
+                    p.data.add_(-group['lr'],
+                                d_p + langevin_noise.sample())
+                else:
+                    p.data.add_(-group['lr'],
+                                d_p)
+
+    def get_lr(self, t):
+        r = self._r(t)
+        lr = self.param_groups[0]['lr0']/2.
+        lr *= (np.cos(np.pi*r) + 1)
+        return lr
+
+    def _r(self, t):
+        M = self.param_groups[0]['M']
+        return ((t-1)%((self.num_iters+M)//M))/((self.num_iters+M)//M)
+
+    def sample(self, closure, num_samples=1000, burn_in=100, print_iters=False, print_loss=False, arr_closure=None):
+        chain = self.samples
+        self.num_iters = num_samples + burn_in
+
+        print("Burn-in phase started")
+        for i in range(burn_in):
+            self.zero_grad()
+            self.loss = closure()
+            # print(self.loss)
+            # print('Loss: {}'.format(self.loss))
+            self.loss.backward()
+            self.step(lr=self.get_lr(i), iter_num=i)
+            # logp_array.append(-self.loss.item())
+            sq_err_loss = closure(add_prior=False)
+            if arr_closure is not None:
+                arr_closure(self.loss, sq_err_loss)
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Burn-in iter {:04d} | loss {:.06f}'.format(i+1, sq_err_loss.item()))
+                else:
+                    print('Burn-in iter {:04d}'.format(i+1))
+
+
+        print("Sampling phase started")
+        for i in range(num_samples):
+            self.zero_grad()
+            self.loss = closure()
+            self.loss.backward()
+            self.step(lr=self.get_lr(i+burn_in), iter_num=i+burn_in)
+            params = [[p.clone().detach().data.numpy() for p in group['params']]
+                  for group in self.param_groups]
+            chain.append((params, True))
+            sq_err_loss = closure(add_prior=False)
+            if arr_closure is not None:
+                arr_closure(self.loss, sq_err_loss)
+            if print_iters:
+                if print_loss:
+                    with torch.no_grad():
+                        print('Sample iter {:04d} | loss {:.06f}'.format(i+1, sq_err_loss.item()))
+                else:
+                    print('Sample iter {:04d}'.format(i+1))
+
+            # logp_array.append(-self.loss.item())
+        
+        return chain#, logp_array

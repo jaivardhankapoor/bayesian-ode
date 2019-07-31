@@ -1,42 +1,42 @@
 {
     "MALA": [
-        {"id":"1", "lr": 1e-2, "add_noise": true, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"2", "lr": 1e-2, "add_noise": true, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"3", "lr": 1e-2, "add_noise": true, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"4", "lr": 1e-2, "add_noise": true, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"5", "lr": 2e-2, "add_noise": true, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"6", "lr": 2e-2, "add_noise": true, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"7", "lr": 2e-2, "add_noise": true, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"8", "lr": 2e-2, "add_noise": true, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50}
+        {"id":"1", "lr": 1e-2, "add_noise": true, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"2", "lr": 1e-2, "add_noise": true, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"3", "lr": 1e-2, "add_noise": true, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"4", "lr": 1e-2, "add_noise": true, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"5", "lr": 2e-2, "add_noise": true, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"6", "lr": 2e-2, "add_noise": true, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"7", "lr": 2e-2, "add_noise": true, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"8", "lr": 2e-2, "add_noise": true, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50}
     ],
     "pSGLD": [
-        {"id":"1", "lr0": 5e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"2", "lr0": 5e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"3", "lr0": 5e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"4", "lr0": 5e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"5", "lr0": 2e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 2000, "num_samples": 8000, "print_loss": false, "thinning":80},
-        {"id":"6", "lr0": 2e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 2000, "num_samples": 8000, "print_loss": false, "thinning":80},
-        {"id":"7", "lr0": 2e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 2000, "num_samples": 8000, "print_loss": false, "thinning":80},
-        {"id":"8", "lr0": 2e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 2000, "num_samples": 8000, "print_loss": false, "thinning":80}
+        {"id":"1", "lr0": 5e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"2", "lr0": 5e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"3", "lr0": 5e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"4", "lr0": 5e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"5", "lr0": 2e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":80},
+        {"id":"6", "lr0": 2e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":80},
+        {"id":"7", "lr0": 2e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":80},
+        {"id":"8", "lr0": 2e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":80}
     ],
     "aSGHMC": [
-        {"id":"1", "lr": 1e-1, "mom_decay": 5e-2, "lambda_": 1e-8, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"2", "lr": 1e-1, "mom_decay": 5e-2, "lambda_": 1e-8, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"3", "lr": 1e-1, "mom_decay": 5e-2, "lambda_": 1e-8, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"4", "lr": 1e-1, "mom_decay": 5e-2, "lambda_": 1e-8, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"5", "lr": 3e-2, "mom_decay": 2e-2, "lambda_": 1e-8, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"6", "lr": 3e-2, "mom_decay": 2e-2, "lambda_": 1e-8, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"7", "lr": 3e-2, "mom_decay": 2e-2, "lambda_": 1e-8, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"8", "lr": 3e-2, "mom_decay": 2e-2, "lambda_": 1e-8, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50}
+        {"id":"1", "lr": 1e-1, "mom_decay": 5e-2, "lambda_": 1e-8, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"2", "lr": 1e-1, "mom_decay": 5e-2, "lambda_": 1e-8, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"3", "lr": 1e-1, "mom_decay": 5e-2, "lambda_": 1e-8, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"4", "lr": 1e-1, "mom_decay": 5e-2, "lambda_": 1e-8, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"5", "lr": 3e-2, "mom_decay": 2e-2, "lambda_": 1e-8, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"6", "lr": 3e-2, "mom_decay": 2e-2, "lambda_": 1e-8, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"7", "lr": 3e-2, "mom_decay": 2e-2, "lambda_": 1e-8, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"8", "lr": 3e-2, "mom_decay": 2e-2, "lambda_": 1e-8, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50}
     ],
     "SGLD": [
-        {"id":"1", "lr0": 3e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"2", "lr0": 3e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"3", "lr0": 3e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"4", "lr0": 3e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 2000, "num_samples": 5000, "print_loss": false, "thinning":50},
-        {"id":"5", "lr0": 1e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 2000, "num_samples": 8000, "print_loss": false, "thinning":80},
-        {"id":"6", "lr0": 1e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 2000, "num_samples": 8000, "print_loss": false, "thinning":80},
-        {"id":"7", "lr0": 1e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 2000, "num_samples": 8000, "print_loss": false, "thinning":80},
-        {"id":"8", "lr0": 1e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 2000, "num_samples": 8000, "print_loss": false, "thinning":80}
+        {"id":"1", "lr0": 3e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"2", "lr0": 3e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"3", "lr0": 3e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"4", "lr0": 3e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.95, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":50},
+        {"id":"5", "lr0": 1e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":80},
+        {"id":"6", "lr0": 1e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":80},
+        {"id":"7", "lr0": 1e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":80},
+        {"id":"8", "lr0": 1e-1, "lr_gamma": 0.51, "lr_t0": 1e2, "lr_alpha": 1e-1, "lambda_": 1e-8, "alpha":0.98, "burn_in": 500, "num_samples": 10000, "print_loss": false, "thinning":80}
     ]
 }
