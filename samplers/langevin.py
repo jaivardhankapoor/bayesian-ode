@@ -1699,10 +1699,17 @@ class cSGLD(Sampler):
             self.loss = closure()
             self.loss.backward()
             self.step(lr=self.get_lr(i+burn_in), iter_num=i+burn_in)
-            params = [[p.clone().detach().data.numpy() for p in group['params']]
-                  for group in self.param_groups]
-            chain.append((params, True))
+            r = self._r(i+burn_in)
+            if r > self.param_groups[0]['beta']:
+                params = [[p.clone().detach().data.numpy() for p in group['params']]
+                    for group in self.param_groups]
+                chain.append((params, True))
+            else:
+                params = [[None for p in group['params']]
+                    for group in self.param_groups]
+                chain.append((params, True))
             sq_err_loss = closure(add_prior=False)
+
             if arr_closure is not None:
                 arr_closure(self.loss, sq_err_loss)
             if print_iters:
